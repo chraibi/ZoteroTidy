@@ -22,6 +22,14 @@ Therefore
    then populate it with the necessary information.
    See Notenbook for more information.
 
+## Usage
+
+Since, these operations alter the zotero group on the server, it is better,
+to run the notebooks individually and **sync the group inbetween**.
+
+- [merge items][merge_items.ipynb]
+- [delete duplicate attachements][remove_duplicate_attachements.ipynb]
+
 ## Requirements
 
 This notebook uses [Pyzotero documentation](https://pyzotero.readthedocs.io/en/latest/).
