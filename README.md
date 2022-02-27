@@ -7,7 +7,7 @@ keeping only one attachment.
 
 2. detect duplicate items and merge them.
 
-Zotero, can detect duplicates and merge them. However, this [operation](https://www.zotero.org/support/duplicate_detection)
+`Zotero`, can detect duplicates and merge them. However, this [operation](https://www.zotero.org/support/duplicate_detection)
 can only be done manually.
 
 ## Before usage
@@ -22,7 +22,7 @@ Therefore
 
 1. **Backup** first. See How to
    [locate, back up, and restore](https://www.zotero.org/support/zotero_data)
-   your Zotero library data.
+   your `Zotero` library data.
 2. Disable sync in your desktop client before using it
 3. Copy [config_template.cfg](config_template.cfg) in a new file called `config.cfg`,
    then populate it with the necessary information.
@@ -31,7 +31,7 @@ See notenbooks for more information.
 
 ## Usage
 
-Since, these operations alter the zotero library on the server, it is better,
+Since, these operations alter the `Zotero` library on the server, it is better,
 to run the notebooks individually and **sync the group inbetween**.
 
 For example: 
@@ -47,7 +47,7 @@ Detailed documentation inside the notebooks.
 
 ## Requirements
 
-This notebook uses [Pyzotero documentation](https://pyzotero.readthedocs.io/en/latest/).
+These notebooks uses [Pyzotero documentation](https://pyzotero.readthedocs.io/en/latest/).
 
 ## Example 
 
