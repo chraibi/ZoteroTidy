@@ -33,3 +33,8 @@ to run the notebooks individually and **sync the group inbetween**.
 ## Requirements
 
 This notebook uses [Pyzotero documentation](https://pyzotero.readthedocs.io/en/latest/).
+
+
+## Credits
+
+Some parts of the merging notebook are taken from (zotero-cleanup)[https://github.com/christianbrodbeck/zotero-cleanup].
