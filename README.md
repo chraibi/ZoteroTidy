@@ -1,7 +1,11 @@
 # Maintain-zotero
 
-These notebooks detects items with multiple attachments, then delete them,
+These notebooks do two different operations:
+
+1. detect items with multiple attachments, then delete the duplicates,
 keeping only one attachment.
+
+2. detect duplicate items and merge them.
 
 Zotero, can detect duplicates and merge them. However, this [operation](https://www.zotero.org/support/duplicate_detection)
 can only be done manually.
