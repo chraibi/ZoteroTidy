@@ -38,9 +38,9 @@ For example:
 
 1. backup the library
 2. manualy sync the library
-3. [merge duplicate items](merge_duplicate_items.ipynb)
+3. [delete duplicate attachments](remove_duplicate_attachments.ipynb)
 4. manualy sync the library
-5. [delete duplicate attachments](remove_duplicate_attachments.ipynb)
+5. [merge duplicate items](merge_duplicate_items.ipynb)
 6. manualy sync the library
 
 Detailed documentation inside the notebooks.
