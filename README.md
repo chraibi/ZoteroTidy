@@ -1,6 +1,10 @@
+| :warning: WARNING          |
+|:---------------------------|
+| Don't use these notebooks without prior backuping your databse     |
+
 # Maintain-zotero
 
-This notebook detects items with multiple attachments, then deltes them,
+These notebooks detects items with multiple attachments, then deltes them,
 keeping only one attachment.
 
 Furthermore, if detects duplicate items and merges them.
@@ -27,8 +31,8 @@ Therefore
 Since, these operations alter the zotero group on the server, it is better,
 to run the notebooks individually and **sync the group inbetween**.
 
-- [merge items][merge_items.ipynb]
-- [delete duplicate attachements][remove_duplicate_attachements.ipynb]
+- [merge items](merge_items.ipynb)
+- [delete duplicate attachements](remove_duplicate_attachements.ipynb)
 
 ## Requirements
 
