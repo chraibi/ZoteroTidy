@@ -41,4 +41,4 @@ This notebook uses [Pyzotero documentation](https://pyzotero.readthedocs.io/en/l
 
 ## Credits
 
-Some parts of the merging notebook are taken from (zotero-cleanup)(https://github.com/christianbrodbeck/zotero-cleanup).
+Some parts of the merging notebook are taken from [zotero-cleanup](https://github.com/christianbrodbeck/zotero-cleanup).
