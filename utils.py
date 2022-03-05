@@ -90,14 +90,18 @@ def is_standalone(_item):
 # In[ ]:
 
 
-def retrieve_data(library_id, library_type, api_key):
-    log.info("Retrieving Library...")
-    zot = zotero.Zotero(library_id, library_type, api_key)
-    lib_items = zot.everything(zot.top())
-    T = dt.datetime.now()
-    log.info(f"Got {len(lib_items)} items")
-    log.info(f"Done at {T.hour}:{T.minute}:{T.second}")
-    return zot, lib_items
+def retrieve_data(zot, num_items):
+    """
+    Retrieve  top num_items data from zotero-library.
+
+    Input:
+    zot: zotero instance
+    return:
+    items
+    """
+    lib_items = zot.top(limit=num_items)
+    print(len(lib_items))
+    return lib_items
 
 
 # In[ ]:
@@ -240,12 +244,9 @@ def log_title(_item):
         ttt = f"{_item['data']['title']}"
     else:
         ttt = ""
-        
+
     msg = f"Title: {ttt}"
-    log.info(msg)
-
-
-# In[11]:
+    logging.info(msg)
 
 
 def add_tag(tags, _zot, _item):
