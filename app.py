@@ -22,7 +22,23 @@ st.set_page_config(
 )
 
 
-def demo_function(max_run):
+def demo_function2(max_run, my_bar):
+    """
+    Just a sample function to show how it works.
+    :return:
+    """
+
+    step = int(100 / max_run)
+    for i in range(max_run):
+        progress_by = (i + 1) * step
+        if i == max_run - 1:
+            progress_by = 100
+
+        my_bar.progress(progress_by)
+        time.sleep(1)
+
+
+def demo_function(max_run, my_bar):
     """
     Just a sample function to show how it works.
     :return:
@@ -44,6 +60,9 @@ if __name__ == "__main__":
     if "num_items" not in st.session_state:
         st.session_state.num_items = 0
 
+    if "lib_loaded" not in st.session_state:
+        st.session_state.lib_loaded = False
+
     # UI --------------------------------
     image = Image.open("logo.png")
     st.sidebar.image(image, use_column_width=True)
@@ -61,9 +80,8 @@ if __name__ == "__main__":
         st.markdown("- **duplicate_pdf**: Items with duplicate pdf-files")
         st.markdown("- **nopdf**: Items with *no*  pdf-files")
 
-    st.sidebar.markdown(":open_file_folder:")
     config_file = st.sidebar.file_uploader(
-        "Choose a file",
+        "📙Choose a file",
         type=["cfg", "txt"],
         help="Load config file with group ID, API-key and library type",
     )
@@ -87,68 +105,85 @@ if __name__ == "__main__":
         if not st.session_state.num_items:
             zot = zotero.Zotero(library_id, library_type, api_key)
             st.session_state.num_items = zot.num_items()
-            pl.success(
-                f"""
-            File loaded! Library got {st.session_state.num_items}
-            items."""
-            )
+            pl.success("Config loaded!")
 
-        config = st.form("config_form")
-        with config:
-            c1, c2, c3 = st.columns((1, 1, 2))
-            c1.write("**Report options**")
+        load_library = st.button(
+            "➡️ Load library",
+            key="load_library",
+            help="""
+                                 Depending on the size of the library,
+                                 this operation may take some time!""",
+        )
+        print("before", st.session_state.lib_loaded)
+        if load_library:
+            st.session_state.lib_loaded = False
+            print("inside button", st.session_state.lib_loaded)
+            with st.spinner("Wait for it..."):
+                time.sleep(5)
 
-            c2.write("**Update options**")
+            st.session_state.lib_loaded = True
+            pl.success("Library loaded!")
 
-            update_tags = c2.checkbox(
-                "Update Tags", key="config_form", help="add special tags to items"
-            )
-            report_duplicates = c1.checkbox(
-                "Report Duplicate Items",
-                key="config_form",
-                help="""Duplicate items based on
-                DOI/ISBN and title""",
-            )
+        print("after", st.session_state.lib_loaded)
 
-            delete_duplicates = c2.checkbox(
-                "Merge Duplicate Items",
-                help="""Duplicate items based on
-                DOI/ISBN and merge them""",
-            )
+        if st.session_state.lib_loaded:
+            config = st.form("config_form")
+            with config:
+                c1, c2, c3 = st.columns((1, 1, 2))
+                c1.write("**Report options**")
 
-            report_duplicate_pdf = c1.checkbox(
-                "Report Items with Multiple PDF",
-                help="""Items having more than
-                one pdf file""",
-            )
+                c2.write("**Update options**")
 
-            report_standalone = c1.checkbox(
-                "Report Standalone items",
-                help="""Standlalone items like
-                PDF or Notes""",
-            )
+                update_tags = c2.checkbox(
+                    "Update Tags",
+                    key="config_form",
+                    help="add special tags to items"
+                )
+                report_duplicates = c1.checkbox(
+                    "Report Duplicate Items",
+                    key="config_form",
+                    help="""Duplicate items based on
+                    DOI/ISBN and title""",
+                )
 
-            delete_duplicate_pdf = c2.checkbox(
-                "Delete Multiple PDF",
-                help="""If item has multiple pdf files
-                with
-                the same name, then keep only
-                one pdf.""",
-            )
+                delete_duplicates = c2.checkbox(
+                    "Merge Duplicate Items",
+                    help="""Duplicate items based on
+                    DOI/ISBN and merge them""",
+                )
 
-            items_to_retrieve = c1.slider(
-                "Select items to retrieve from library",
-                min_value=1,
-                max_value=st.session_state.num_items,
-                key="config_form",
-                help="Items to retrieve at once? (the more the slower!)",
-            )
-            start = config.form_submit_button(label="Start")
+                report_duplicate_pdf = c1.checkbox(
+                    "Report Items with Multiple PDF",
+                    help="""Items having more than
+                    one pdf file""",
+                )
 
-            if start:
+                report_standalone = c1.checkbox(
+                    "Report Standalone items",
+                    help="""Standlalone items like
+                    PDF or Notes""",
+                )
+
+                delete_duplicate_pdf = c2.checkbox(
+                    "Delete Multiple PDF",
+                    help="""If item has multiple pdf files
+                    with
+                    the same name, then keep only
+                    one pdf.""",
+                )
+
+                items_to_retrieve = c1.slider(
+                    "Select items to retrieve from library",
+                    min_value=1,
+                    max_value=st.session_state.num_items,
+                    key="config_form",
+                    help="Items to retrieve at once? (the more the slower!)",
+                )
+                start = config.form_submit_button(label="🚦Start")
                 pl2 = st.empty()
-                my_bar = pl2.progress(0)
-                with mylog.st_stdout("success"), mylog.st_stderr("code"):
-                    demo_function(items_to_retrieve)
+                if start:
+                    my_bar = pl2.progress(0)
+                    with mylog.st_stdout("success"), mylog.st_stderr("code"):
+                        demo_function(items_to_retrieve, my_bar)
 
-                pl.success("Done!")
+                    pl.success("Done!")
