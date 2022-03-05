@@ -3,6 +3,7 @@ import logging
 import time
 
 import streamlit as st
+from PIL import Image
 from pyzotero import zotero
 
 import mylogging as mylog
@@ -29,33 +30,45 @@ def demo_function(max_run):
 
     step = int(100 / max_run)
     for i in range(max_run):
-        logging.info(f"Counting... {i}")
-        my_bar.progress(i * step + max_run)
+        progress_by = (i + 1) * step
+        if i == max_run - 1:
+            progress_by = 100
+
+        logging.info(f"Counting... step {step}  {i} - {(i+1) * step}")
+        my_bar.progress(progress_by)
         time.sleep(1)
 
 
 # @st.cache(suppress_st_warning=True)
 if __name__ == "__main__":
-    # UI --------------------------------
-    left_col, right_col = st.columns(2)  # c2 for logs. c1 for important info
-    # Info
-    about = "## Maintain a Zotero library"
-    with left_col:
-        st.markdown(about, True)
-        with st.expander("", expanded=False): #  @todo: more
-            st.markdown("This app reports the following:")
-            st.markdown("- **duplicate_pdf**: Items with duplicate pdf-files")
-            st.markdown("- **nopdf**: Items with *no*  pdf-files")
+    if "num_items" not in st.session_state:
+        st.session_state.num_items = 0
 
-    st.sidebar.markdown(":point_down:")
+    # UI --------------------------------
+    image = Image.open("logo.png")
+    st.sidebar.image(image, use_column_width=True)
+    report_name = "[![Repo](https://badgen.net/badge/icon/GitHub?icon=github&label)](https://github.com/chraibi/maintain-zotero)"
+    st.sidebar.markdown(report_name, unsafe_allow_html=True)
+    st.sidebar.markdown("-------")
+
+    about = ":sos: Maintain a Zotero library"
+
+    st.title(about)
+    st.header("")
+    st.markdown("## About this app")
+    with st.expander("", expanded=False):  # @todo: more
+        st.markdown("This app reports the following:")
+        st.markdown("- **duplicate_pdf**: Items with duplicate pdf-files")
+        st.markdown("- **nopdf**: Items with *no*  pdf-files")
+
+    st.sidebar.markdown(":open_file_folder:")
     config_file = st.sidebar.file_uploader(
-        "Choose a file:",
-        type=["txt", "cfg"],
+        "Choose a file",
+        type=["cfg", "txt"],
         help="Load config file with group ID, API-key and library type",
     )
-
-    with right_col:
-        pl = st.empty()
+    st.sidebar.markdown("-------")
+    pl = st.sidebar.empty()
     if config_file:
         configFilePath = config_file.name
         try:
@@ -64,71 +77,78 @@ if __name__ == "__main__":
             library_id = int(confParser.get("zotero-config", "library_id"))
             api_key = confParser.get("zotero-config", "api_key")
             library_type = confParser.get("zotero-config", "library_type")
-        except confParser.Error:
-            with right_col:
-                pl.error(
-                    """Can't parse the config file.
-                    Try uploading another file!"""
-                )
+        except Exception as e:
+            pl.error(
+                f"""Can't parse the config file.
+                Error: {e}"""
+            )
             st.stop()
 
-        zot = zotero.Zotero(library_id, library_type, api_key)
-        num_items = zot.num_items()
-        with right_col:
-            pl.success(f"File loaded! Library got {num_items} items.")
-
-        with left_col:
-            config = st.form("config_form")
-            config.markdown("# Options")
-            items_to_retrieve = config.slider(
-                "Select items to retrieve from library",
-                min_value=1,
-                max_value=num_items,
-                help="Items to retrieve at once? (the more the slower!)",
-            )
-            update_tags = config.checkbox(
-                "Update Tags", help="add special tags to items"
+        if not st.session_state.num_items:
+            zot = zotero.Zotero(library_id, library_type, api_key)
+            st.session_state.num_items = zot.num_items()
+            pl.success(
+                f"""
+            File loaded! Library got {st.session_state.num_items}
+            items."""
             )
 
-            report_duplicates = config.checkbox(
+        config = st.form("config_form")
+        with config:
+            c1, c2, c3 = st.columns((1, 1, 2))
+            c1.write("**Report options**")
+
+            c2.write("**Update options**")
+
+            update_tags = c2.checkbox(
+                "Update Tags", key="config_form", help="add special tags to items"
+            )
+            report_duplicates = c1.checkbox(
                 "Report Duplicate Items",
-                help="""Report duplicate items based on
+                key="config_form",
+                help="""Duplicate items based on
                 DOI/ISBN and title""",
             )
 
-            delete_duplicates = config.checkbox(
+            delete_duplicates = c2.checkbox(
                 "Merge Duplicate Items",
-                help="""Identify duplicate items based on
+                help="""Duplicate items based on
                 DOI/ISBN and merge them""",
             )
 
-            report_duplicate_pdf = config.checkbox(
+            report_duplicate_pdf = c1.checkbox(
                 "Report Items with Multiple PDF",
-                help="""Report items having more than
+                help="""Items having more than
                 one pdf file""",
             )
 
-            report_standalone = config.checkbox(
+            report_standalone = c1.checkbox(
                 "Report Standalone items",
-                help="""Report standlalone items like
+                help="""Standlalone items like
                 PDF or Notes""",
             )
 
-            delete_duplicate_pdf = config.checkbox(
+            delete_duplicate_pdf = c2.checkbox(
                 "Delete Multiple PDF",
                 help="""If item has multiple pdf files
-                with expr as alias:
+                with
                 the same name, then keep only
-                one.""",
+                one pdf.""",
             )
 
-            start = config.form_submit_button("Start")
+            items_to_retrieve = c1.slider(
+                "Select items to retrieve from library",
+                min_value=1,
+                max_value=st.session_state.num_items,
+                key="config_form",
+                help="Items to retrieve at once? (the more the slower!)",
+            )
+            start = config.form_submit_button(label="Start")
 
             if start:
-                with right_col:
-                    pl2 = st.empty()
-                    my_bar = pl.progress(0)
-                    with mylog.st_stdout("success"), mylog.st_stderr("code"):
-                        demo_function(items_to_retrieve)
+                pl2 = st.empty()
+                my_bar = pl2.progress(0)
+                with mylog.st_stdout("success"), mylog.st_stderr("code"):
+                    demo_function(items_to_retrieve)
 
-                    pl.success("Done!")
+                pl.success("Done!")
