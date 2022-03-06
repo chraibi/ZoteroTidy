@@ -64,10 +64,12 @@ def update_session_state():
     st.session_state.num_items = st.session_state.zot.num_items()
     st.session_state.lib_loaded = False
     st.session_state.multpdf_items = []
+    st.session_state.init_multpdf_items = False
     st.session_state.pdfs = defaultdict(list)
     st.session_state.nopdf_items = []
     st.session_state.suspecious_items = []
     st.session_state.doi_dupl_items = []
+    st.session_state.init_doi_dupl_items = False
     st.session_state.no_doi_isbn_items = []
 
 
@@ -93,12 +95,19 @@ if __name__ == "__main__":
     if "multpdf_items" not in st.session_state:
         st.session_state.multpdf_items = []
 
+    if "init_multpdf_items" not in st.session_state:
+        st.session_state.init_multpdf_items = False
+
     if "pdfs" not in st.session_state:
         st.session_state.pdfs = defaultdict(list)
 
     if "doi_dupl_items" not in st.session_state:
         st.session_state.doi_dupl_items = []
 
+    if "init_doi_dupl_items" not in st.session_state:
+        st.session_state.init_doi_dupl_items = []
+
+        
     if "no_doi_isbn_items" not in st.session_state:
         st.session_state.no_doi_isbn_items = []
 
@@ -115,9 +124,10 @@ if __name__ == "__main__":
     st.markdown("## :information_source: About this app (expand for more)")
     with st.expander("", expanded=False):  # @todo: more
         st.header("This app reports and/or updates an online Zotero library")
+        
         # Sanity checks
         utils.intro()
-
+        
     config_file = st.sidebar.file_uploader(
         "📙Choose a config file ",
         type=["cfg", "txt"],
@@ -289,18 +299,22 @@ if __name__ == "__main__":
                                 logging.info(f"Title: {d}")
 
                     if report_duplicates:
-                        utils.update_duplicate_items()
-                        
+                        with st.spinner('processing ...'):
+                            utils.update_duplicate_items_state()
+
+                        duplicates = st.session_state.doi_dupl_items
                         if len(duplicates):
                             pl2.warning(f"Duplicate items: {len(duplicates)}")
                         else:
                             pl2.info("No duplicate items found.")
-                            
+
                         for d in duplicates:
-                            with mylog.st_stdout("success"), mylog.st_stderr("code"):
+                            with mylog.st_stdout("success"),\
+                                 mylog.st_stderr("code"):
+
                                 logging.info(f"Title: {d}")
 
-                    ## Functionalities
+                    # Functionalities
                     if report_standalone:
                         standalones = utils.get_standalone_items(
                             st.session_state.zot_items
@@ -316,7 +330,7 @@ if __name__ == "__main__":
                                 logging.info(f"Type: {d}")
 
                     if report_duplicate_pdf:
-                        t1 = time.process_time()                        
+                        t1 = time.process_time()
                         with st.spinner('processing ...'):
                             utils.update_duplicate_attach_state()
 
@@ -353,12 +367,15 @@ if __name__ == "__main__":
                         msg_status.info(f"Items loaded in {msg_time}")
                         num_duplicates = len(st.session_state.nopdf_items)
                         if num_duplicates:
-                            pl2.warning(f"Items with no pdf attachments: {num_duplicates}")
+                            pl2.warning(f"""
+                            Items with no pdf attachments:
+                            {num_duplicates}""")
+                            
                             for item in st.session_state.nopdf_items:
                                 item_key = item["key"]
-                                with mylog.st_stdout("success"), mylog.st_stderr(
-                                    "code"
-                                ):
+                                with mylog.st_stdout("success"), \
+                                     mylog.st_stderr("code"):
+
                                     ttt = item["data"]["title"]
                                     logging.info(f"""Title: {ttt}""")
                         else:
@@ -375,7 +392,9 @@ if __name__ == "__main__":
 
                         for item in st.session_state.suspecious_items:
                             item_key = item["key"]
-                            with mylog.st_stdout("success"), mylog.st_stderr("code"):
+                            with mylog.st_stdout("success"), \
+                                 mylog.st_stderr("code"):
+
                                 ttt = item["data"]["title"]
                                 logging.info(f"""Title: {ttt}""")
 
@@ -389,21 +408,29 @@ if __name__ == "__main__":
                                               update_tags_m)
 
                     if delete_duplicates:
-                        # deleting attachments does not update the version of the lib.
+                        if not utils.uptodate():
+                            pl2.error("Library not up-to-date. Reload!")
+                        else:
+                            with st.spinner('processing ...'):
+                                res = utils.delete_duplicate_items(pl2)
+
+                            if res:
+                                pl2.info("Done!")
+                            else:
+                                pl2.info("No duplicates to delete!")
+
+                    if delete_duplicate_pdf:
+                        # deleting attachments does not update
+                        # the version of the lib.
                         # weird!
                         # todo: find out why?
                         if not utils.uptodate():
                             pl2.error("Library not up-to-date. Reload!")
                         else:
-                            utils.delete_duplicate_items(pl2)
+                            with st.spinner('processing ...'):
+                                res = utils.delete_duplicate_pdf(pl2)
 
-                    if delete_duplicate_pdf:
-                        if not utils.uptodate():
-                            pl2.error("Library not up-to-date. Reload!")
-                        else:
-                            res = utils.delete_duplicate_pdf(pl2)
                             if res:
                                 pl2.info("Done!")
                             else:
                                 pl2.info("Nothing to delete!")
-
