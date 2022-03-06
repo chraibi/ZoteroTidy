@@ -170,9 +170,10 @@ if __name__ == "__main__":
             st.session_state.lib_loaded = True
             msg_time = utils.get_time(t2 - t1)
             msg_status.info(f"Items loaded in {msg_time}")
-
+       
         if st.session_state.lib_loaded:
             config = st.form("config_form")
+            placeholder = st.empty()
             with config:
                 c1, c2 = st.columns((1, 1))
                 c1.write("**Report options**")
@@ -238,7 +239,6 @@ if __name__ == "__main__":
                 trash = c1.checkbox("Show trash status", help="""Trash empty?""")
                 start = config.form_submit_button(label="🚦Start")
                 pl2 = st.empty()
-
                 if start:
                     if head:
                         num_head = 10
@@ -289,11 +289,8 @@ if __name__ == "__main__":
                                 logging.info(f"Title: {d}")
 
                     if report_duplicates:
-                        if not st.session_state.doi_dupl_items:
-                            duplicates = utils.duplicates_by_doi(
-                                st.session_state.zot_items
-                            )
-
+                        utils.update_duplicate_items()
+                        
                         if len(duplicates):
                             pl2.warning(f"Duplicate items: {len(duplicates)}")
                         else:
@@ -319,15 +316,16 @@ if __name__ == "__main__":
                                 logging.info(f"Type: {d}")
 
                     if report_duplicate_pdf:
-                        t1 = time.process_time()
-                        utils.update_duplicate_attach_state()
+                        t1 = time.process_time()                        
+                        with st.spinner('processing ...'):
+                            utils.update_duplicate_attach_state()
 
                         t2 = time.process_time()
                         pl2.info(t2 - t1)
                         msg_time = utils.get_time(t2 - t1)
                         msg_status.info(f"Items loaded in {msg_time}")
                         num_duplicates = len(st.session_state.multpdf_items)
-                        if num_duplicates:                            
+                        if num_duplicates:
                             pl2.warning(
                                 f"Items with duplicate pdf files found: {num_duplicates}"
                             )
@@ -385,12 +383,27 @@ if __name__ == "__main__":
                         if not utils.uptodate():
                             pl2.error("Library not up-to-date. Reload!")
                         else:
-                            utils.update_tags(pl2, update_tags_z, update_tags_n, update_tags_m)
-                        
+                            utils.update_tags(pl2,
+                                              update_tags_z,
+                                              update_tags_n,
+                                              update_tags_m)
 
-# my_bar = pl2.progress(0)
+                    if delete_duplicates:
+                        # deleting attachments does not update the version of the lib.
+                        # weird!
+                        # todo: find out why?
+                        if not utils.uptodate():
+                            pl2.error("Library not up-to-date. Reload!")
+                        else:
+                            utils.delete_duplicate_items(pl2)
 
-# with mylog.st_stdout("success"), mylog.st_stderr("code"):
-#     demo_function(items_to_retrieve, my_bar)
+                    if delete_duplicate_pdf:
+                        if not utils.uptodate():
+                            pl2.error("Library not up-to-date. Reload!")
+                        else:
+                            res = utils.delete_duplicate_pdf(pl2)
+                            if res:
+                                pl2.info("Done!")
+                            else:
+                                pl2.info("Nothing to delete!")
 
-# msg_status.success("Done!")

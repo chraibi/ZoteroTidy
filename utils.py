@@ -83,8 +83,7 @@ def get_suspecious_items(lib_items):
     return list_catalog_zotero
 
 
-@st.cache
-def get_items_with_duplicate_pdf(_zot, _items):
+def get_items_with_duplicate_pdf(_zot, _items):    
     _items_duplicate_attach = []
     _pdf_attachments = defaultdict(list)
     for _item in _items:
@@ -170,7 +169,6 @@ def retrieve_data(zot, num_items):
 
 
 def trash_is_empty(zot):
-    print(len(st.session_state.suspecious_items))
     if len(zot.trash()) > 0:
         return False
     else:
@@ -276,23 +274,17 @@ def get_items_with_empty_doi_and_isbn(_lib_items, fields):
     return empty
 
 
-def delete_pdf_attachments(_children, ask=False):
+def delete_pdf_attachments(_children, pl2):
     deleted_attachment = False
+    zot = st.session_state.zot
+
     for child in _children[1:]:
         if not attachment_is_pdf(child):
-            continue  # only for pdf files. Other files, like notes, zip, etc, should not be deleted, anyway.
+            continue  # only for pdf files.
 
-        if ask:
-            answer = input(f"delete {child['data']['filename']}? (y[N])")
-            if answer == "y":
-                log.warning(f"deleting {child['data']['filename']}")
-                zot.delete_item(child)
-                deleted_attachment = True
-
-        else:
-            log.warning(f"deleting {child['data']['filename']}")
-            zot.delete_item(child)
-            deleted_attachment = True
+        pl2.warning(f"deleting {child['data']['filename']}")
+        zot.delete_item(child)
+        deleted_attachment = True
 
     return deleted_attachment
 
@@ -374,6 +366,23 @@ def update_duplicate_attach_state():
         st.session_state.pdfs = pdfs
 
 
+def force_update_duplicate_attach_state():
+    items, pdfs = get_items_with_duplicate_pdf(
+        st.session_state.zot, st.session_state.zot_items
+    )
+
+    st.session_state.multpdf_items = items
+    st.session_state.pdfs = pdfs
+        
+
+def update_duplicate_items():
+    if not st.session_state.doi_dupl_items:
+        duplicates = duplicates_by_doi(
+            st.session_state.zot_items
+        )
+        st.session_state.doi_dupl_items = duplicates
+
+
 def update_without_pdf_state():
     if not st.session_state.nopdf_items:
         items = get_items_with_no_pdf_attachments2(
@@ -393,6 +402,8 @@ def uptodate():
 
     v1 = most_recent_item_on_server['data']['version']
     v2 = first_item_in_cache['data']['version']
+    print("v1", v1)
+    print("v2", v2)
     return v1 == v2
 
 
@@ -427,3 +438,39 @@ def update_tags(pl2, update_tags_z, update_tags_n, update_tags_m):
             pl2.warning("Library updated. You may want to re-load it")
         else:
             pl2.info("Tags of the library are not changed.")
+
+
+def delete_duplicate_items(pl2):
+    update_duplicate_items()
+    pass
+
+
+def delete_duplicate_pdf(pl2):
+    update_duplicate_attach_state()
+    deleted_attachment = False
+    items_duplicate_attach = st.session_state.multpdf_items
+    pdf_attachments = st.session_state.pdfs
+    zot = st.session_state.zot
+
+    print(len(items_duplicate_attach))
+    for item in items_duplicate_attach:
+        files = pdf_attachments[item["key"]]
+        cs = zot.children(item["key"])
+        print("files: ", files)
+        print("set: ", set(files))
+        
+        if len(set(files)) == 1 and len(files) > 1:
+            # some items have different pdf files, like suppl materials.
+            # Should not be deleted
+            # here attachments are all named the same
+            # -->  a sign of duplicates
+            with mylog.st_stdout("success"), mylog.st_stderr("code"):
+                logging.warning("all files are the same. Proceed deleting ..")
+                logging.warning(files)
+
+            deleted_attachment = delete_pdf_attachments(cs, pl2)
+
+        if deleted_attachment:
+            force_update_duplicate_attach_state()
+                
+    return deleted_attachment
