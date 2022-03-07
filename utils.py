@@ -32,7 +32,7 @@ def manual():
        | $I_3$ | 2  | $NOTE_3$, $PDF_3$ |
 
        :red_circle: **NOTE:**
-            Duplicate items are identified based on their DOI and/or ISBN
+            Duplicate items are identified based on their DOI and/or ISBN.
 
         Description:
           - Sort the Items with respect to added time (oldest first)
@@ -49,8 +49,8 @@ def manual():
 
         **Remove duplicate pdf files**
 
-        Some items have duplicate pdf files, e.g. ['file1.pdf, file1.pdf'].
-        In this case, all attachments are pdf files with the same name,
+        Some items have duplicate pdf files, e.g. `[file1.pdf, file1.pdf]`.
+        In this case (all attachments are pdf files with the same name)
         only one attachment will be kept.
 
         :red_circle: **NOTE:**
@@ -89,7 +89,7 @@ def howto():
         If you intend to change the Zotero library with
         this app, then
 
-        - Backup first
+        - **Backup first.**  
            See How to
            [locate, back up, and restore](https://www.zotero.org/support/zotero_data)
            your `Zotero` library data.
@@ -103,7 +103,7 @@ def howto():
 def about():
 
     msg = st.markdown(
-        """ The app offers several functionalities
+        """ This app offers several functionalities
     to ease the maintenance of Zotero libraries.
 
     Some functionalities are **read-only** from an online Zotero library

@@ -1,6 +1,9 @@
 import configparser
+import logging
+import os
 import time
 from collections import defaultdict
+from pathlib import Path
 
 import streamlit as st
 from PIL import Image
@@ -19,6 +22,9 @@ st.set_page_config(
         "About": "## Zotero Sanity Checks\n :copyright: Mohcine Chraibi",
     },
 )
+
+path = Path(__file__)
+ROOT_DIR = path.parent.absolute()
 
 
 def progress(max_run, my_bar):
@@ -127,7 +133,9 @@ if __name__ == "__main__":
     st.sidebar.markdown("-------")
     msg_status = st.sidebar.empty()
     if config_file:
-        configFilePath = config_file.name
+        logging.info(f"path: {path}")
+        logging.info(f"ROOT_DIR: {ROOT_DIR}")
+        configFilePath = os.path.join(ROOT_DIR, config_file.name)
         try:
             confParser = configparser.RawConfigParser()
             confParser.read(configFilePath)
