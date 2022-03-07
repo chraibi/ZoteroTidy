@@ -136,18 +136,13 @@ if __name__ == "__main__":
     msg_status = st.sidebar.empty()
     if config_file:
         configFilePath = os.path.join(ROOT_DIR, config_file.name)
-        confParser = configparser.ConfigParser()
-        logging.info(f"path: {path}")
-        logging.info(f"ROOT_DIR: {ROOT_DIR}")
-        logging.info(f"config_file.name: {config_file.name}")
-        logging.info(f"configFilePath: {configFilePath}")
-        logging.info(config_file)
-        
+        confParser = configparser.RawConfigParser()
+        stringio = StringIO(config_file.getvalue().decode("utf-8"))
+        string_data = stringio.read()       
         try:
-            confParser.read(configFilePath)
+            confParser.read_string(string_data)
         except Exception as e:
             logging.info(f"can not read file {configFilePath} with error {str(e)}")
-
         try:
             library_id = int(confParser.get("zotero-config", "library_id"))
             api_key = confParser.get("zotero-config", "api_key")
