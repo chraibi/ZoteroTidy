@@ -50,12 +50,13 @@ def intro():
         and produce reports.
 
         Others, however, **change** the online Zotero library.
+        These can not be executed if the library is not in sync.
 
         **Tag library items:**
-          - duplicate pdf-files: `duplicate_pdf`
+          - Items with duplicate pdf-files: `duplicate_pdf`
           - Items *without* pdf-files: `nopdf`
-          - Tag elements *libraryCatalog* \"Zotero\" with `todo_catalog`
-
+          - Items with *libraryCatalog* \"Zotero\": `todo_catalog`
+          - Duplicate items: `duplicate_item`
         :red_circle: **NOTE**: These options, need to calculate some lists,
         in case these are still empty, e.g.,
         List items with duplicate pdf attachments.
@@ -202,7 +203,7 @@ def retrieve_data(zot, num_items):
 
 
 def trash_is_empty(zot):
-    return len(zot.trash()) > 0
+    return len(zot.trash()) == 0
 
 
 def get_time(t):
@@ -323,15 +324,14 @@ def log_title(_item):
     if "title" in _item["data"].keys():
         ttt = f"{_item['data']['title']}"
     else:
-        ttt = ""
+        ttt = f"Standalone item of type: <{_item['data']['itemType']}>"
 
-    with mylog.st_stdout("success"),\
-         mylog.st_stderr("code"):
+    with mylog.st_stdout("success"), mylog.st_stderr("code"):
 
         logging.info(f"{ttt}")
 
 
-def set_new_tag(z, n, m):
+def set_new_tag(z, n, m, d):
     """Update tags. This function updates session_state if necessary
 
     if session_state lists are empty, update.
@@ -354,6 +354,15 @@ def set_new_tag(z, n, m):
         items_without_pdf = st.session_state.nopdf_items
         for item in items_without_pdf:
             new_tags[item["data"]["key"]].append("nopdf")
+
+    if d:
+        update_duplicate_items_state()
+        duplicate_items = st.session_state.doi_dupl_items
+        print(type(duplicate_items))
+        
+        for item in duplicate_items:
+            print(type(item), item)
+            new_tags[item["data"]["key"]].append("duplicate_item")
 
     return new_tags
 
@@ -416,6 +425,7 @@ def force_update_duplicate_items_state():
     st.session_state.doi_dupl_items = duplicates
     st.session_state.init_doi_dupl_items = True
 
+
 def update_without_pdf_state():
     if not st.session_state.nopdf_items:
         items = get_items_with_no_pdf_attachments2(st.session_state.zot_items)
@@ -424,27 +434,74 @@ def update_without_pdf_state():
 
 
 def uptodate():
-    """Check if library is outdated
+    """Check if library is up to date
+
+    every change in Zotero-Library increments
+    the version number by one.
+    For example trash being emptied --> +1
+    or note's content changed --> +1
+    """
+    actual_st_version = st.session_state.zot_version
+    last_modified_version = st.session_state.zot.last_modified_version()
+
+    return actual_st_version == last_modified_version
+
+
+def items_uptodate():
+    """Check if items are outdated
 
     If outdated, don't execute any update-functions
     """
-    most_recent_item_on_server = st.session_state.zot.top(limit=1)[0]
-    first_item_in_cache = st.session_state.zot_items[0]
 
-    v1 = most_recent_item_on_server["data"]["version"]
-    v2 = first_item_in_cache["data"]["version"]
-    print("v1", v1)
-    print("v2", v2)
-    return v1 == v2
+    zot = st.session_state.zot
+    vs = zot.item_versions()
+
+    vc = {}
+    for item in st.session_state.zot_items:
+        vc[item["key"]] = item["data"]["version"]
+
+    vs_reduced = {k: vs[k] for k in vc.keys()}
+    print("----")
+    print("vc: ", len(vc), vc)
+    print("vs: ", len(vs), vs)
+    print("vs_reduced: ", len(vs_reduced), vs_reduced)
+    print(vc == vs_reduced)
+    return vc == vs_reduced
 
 
-def update_tags(pl2, update_tags_z, update_tags_n, update_tags_m):
-    new_tags = set_new_tag(update_tags_z, update_tags_n, update_tags_m)
+# def uptodate():
+#     """Check if library is outdated
+
+#     If outdated, don't execute any update-functions
+#     """
+#     most_recent_item_on_server = st.session_state.zot.top(limit=1)[0]
+#     first_item_in_cache = st.session_state.zot_items[0]
+
+#     v1 = most_recent_item_on_server["data"]["version"]
+#     v2 = first_item_in_cache["data"]["version"]
+#     print("v1", v1)
+#     print("v2", v2)
+#     return v1 == v2
+
+
+def update_tags(pl2,
+                update_tags_z,
+                update_tags_n,
+                update_tags_m,
+                update_tags_d):
+    """
+    Update special items with some tags (suspecious, nopdf, multiple pdf, duplicate)
+    """
+
+    new_tags = set_new_tag(update_tags_z,
+                           update_tags_n,
+                           update_tags_m,
+                           update_tags_d)
     changed = []
     if not new_tags:
-        pl2.info("Tags of the library are not changed.")
+        pl2.info(":heavy_check_mark: Tags of the library are not changed.")
     else:
-        pl2.warning("Updating tags ...")
+        pl2.warning(":red_circle: Updating tags ...")
 
         my_bar = st.progress(0)
         step = int(100 / st.session_state.num_items)
@@ -462,9 +519,9 @@ def update_tags(pl2, update_tags_z, update_tags_n, update_tags_m):
             changed.append(ch)
 
         if any(changed):
-            pl2.warning("Library updated. You may want to re-load it")
+            pl2.warning(":warning: Library updated. You may want to re-load it")
         else:
-            pl2.info("Tags of the library are not changed.")
+            pl2.info(":heavy_check_mark: Tags of the library are not changed.")
 
 
 def init_update_delete_lists():
@@ -529,8 +586,10 @@ def delete_duplicate_items(pl2):
         log_title(delete_item)
         deleted_or_updated = True
 
+    # remove tag
+
     if not deleted_or_updated:
-        pl2.info("Library has no duplicates!")
+        pl2.info(":heavy_check_mark: Library has no duplicates!")
 
     force_update_duplicate_items_state()
 
@@ -557,6 +616,7 @@ def delete_duplicate_pdf(pl2):
 
             deleted_attachment = delete_pdf_attachments(cs, pl2)
 
+        # todo remove tag duplicate_pdf if exists
         if deleted_attachment:
             force_update_duplicate_attach_state()
 
