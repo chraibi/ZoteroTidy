@@ -351,7 +351,7 @@ if __name__ == "__main__":
                             with mylog.st_stdout("success"),\
                                  mylog.st_stderr("code"):
 
-                                logging.info(f"{d}")
+                                utils.log_title(d)
 
                     # Functionalities
                     if report_standalone:

@@ -246,7 +246,7 @@ def duplicates_by_doi(lib_items):
     for _, items in by_doi.items():
         if len(items) > 1:
             for i in items:
-                result.append(i["data"]["title"])
+                result.append(i)
 
     return result
 
