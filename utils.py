@@ -359,7 +359,7 @@ def set_new_tag(z, n, m, d):
         update_duplicate_items_state()
         duplicate_items = st.session_state.doi_dupl_items
         print(type(duplicate_items))
-        
+
         for item in duplicate_items:
             print(type(item), item)
             new_tags[item["data"]["key"]].append("duplicate_item")
@@ -568,7 +568,7 @@ def delete_duplicate_items(pl2):
 
     if update_items:
         with mylog.st_stdout("success"), mylog.st_stderr("code"):
-            logging.info("Updating library ...")
+            logging.info("Deleting duplicate items ...")
 
     # update first, so we don't delete parents of items we want to keep
     for update_item in update_items:
@@ -590,6 +590,8 @@ def delete_duplicate_items(pl2):
 
     if not deleted_or_updated:
         pl2.info(":heavy_check_mark: Library has no duplicates!")
+    else:
+        zot.delete_tags("duplicate_item")
 
     force_update_duplicate_items_state()
 
@@ -616,8 +618,8 @@ def delete_duplicate_pdf(pl2):
 
             deleted_attachment = delete_pdf_attachments(cs, pl2)
 
-        # todo remove tag duplicate_pdf if exists
         if deleted_attachment:
+            zot.delete_tags("nopdf")
             force_update_duplicate_attach_state()
 
     return deleted_attachment
