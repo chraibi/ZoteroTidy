@@ -1,12 +1,9 @@
-import logging
 from collections import defaultdict
 from datetime import datetime
-import mylogging as mylog
 
 import streamlit as st
 
 DATE_FMT = "%Y-%m-%dT%XZ"
-STATUS_OK = True
 
 
 def manual():
@@ -61,14 +58,14 @@ def manual():
             This might be the case of items that are, for example,
         having supplementary materials nebst the actual pdf file.
         """
-        )
+    )
 
 
 def howto():
     return st.markdown(
         """
         **Config file**
-        
+
         Before using this app, the following parameters should be defined:
         - the `library_id`: Can be found by opening the
           [group](https://www.zotero.org/groups)’s page
@@ -103,7 +100,8 @@ def howto():
 
 def about():
 
-    msg = st.markdown(""" The app offers several functionalities
+    msg = st.markdown(
+        """ The app offers several functionalities
     to ease maintenance of Zotero libraries.
 
     Some functionalities **read** only from an online Zotero library
@@ -111,7 +109,8 @@ def about():
 
     Others, however, **change** the online Zotero library.
     These can not be executed if the library is not in sync.
-    """)
+    """
+    )
 
     return msg
 
@@ -121,15 +120,18 @@ def date_added(_item):
 
 
 def attachment_is_pdf(_child):
+    """
+    True if attachment is pdf
+
+    # https://www.zotero.org/support/dev/web_api/v3/file_upload
+    """
+
     return (
         _child["data"]["itemType"] == "attachment"
         and _child["data"]["contentType"] == "application/pdf"
         and _child["data"]["linkMode"]
         in ["imported_file", "linked_file", "imported_url"]
     )
-
-
-# https://www.zotero.org/support/dev/web_api/v3/file_upload
 
 
 def get_suspecious_items(lib_items):
@@ -204,7 +206,7 @@ def get_standalone_items(_items):
     standalone = []
     for _item in _items:
         if is_standalone(_item):
-            standalone.append(_item["data"]["itemType"])
+            standalone.append(_item)
 
     return standalone
 
@@ -231,7 +233,10 @@ def trash_is_empty(zot):
 
 
 def get_time(t):
-    """Get str run time as min sec"""
+    """
+    Get str run time as min sec
+    """
+
     minutes = t // 60
     seconds = t % 60
     return f"""{minutes:.0f} min:{seconds:.2f} sec"""
@@ -254,7 +259,6 @@ def duplicates_by_title(lib_items):
             set(duplicate_items_by_title[Type])
         )
         if num_duplicates_items:
-            # duplicates = set([x for x in duplicate_items_by_title[Type] if duplicate_items_by_title[Type].count(x) > 1])
             duplicates = {
                 x
                 for x in duplicate_items_by_title[Type]
@@ -311,8 +315,8 @@ def get_items_with_empty_doi_and_isbn(_lib_items, fields):
     return title of items with no isbn and no doi
 
     fields is a list of str: ["DOI", "ISBN"]
-
     """
+
     empty = []
     for _item in _lib_items:
         result = []
@@ -325,7 +329,7 @@ def get_items_with_empty_doi_and_isbn(_lib_items, fields):
                     result.append(True)
 
         if not any(result):
-            empty.append(_item["data"]["title"])
+            empty.append(_item)
 
     return empty
 
@@ -345,14 +349,14 @@ def delete_pdf_attachments(_children, pl2):
 
 
 def log_title(_item):
-    if "title" in _item["data"].keys():
-        ttt = f"{_item['data']['title']}"
-    else:
+    if is_standalone(_item):
         ttt = f"Standalone item of type: <{_item['data']['itemType']}>"
+        if "filename" in _item["data"]:
+            ttt += f", title {_item['data']['filename']}"
+    else:
+        ttt = f"{_item['data']['title']}"
 
-    with mylog.st_stdout("success"), mylog.st_stderr("code"):
-
-        logging.info(f"{ttt}")
+    st.code(f"{ttt}")
 
 
 def set_new_tag(z, n, m, d):
@@ -392,7 +396,7 @@ def set_new_tag(z, n, m, d):
 
 
 def add_tag(tags_to_add, _zot, _item):
-    if not tags_to_add:
+    if not tags_to_add or is_standalone(_item):
         return False
 
     title = _item["data"]["title"]
@@ -402,9 +406,7 @@ def add_tag(tags_to_add, _zot, _item):
     if not new_tags:
         return False
 
-    with mylog.st_stdout("success"), mylog.st_stderr("code"):
-        logging.info(f"add tags {new_tags} to {title}")
-
+    st.code(f"add tags {new_tags} to {title}")
     _zot.add_tags(_item, *new_tags)
     return True
 
@@ -508,19 +510,14 @@ def items_uptodate():
 #     return v1 == v2
 
 
-def update_tags(pl2,
-                update_tags_z,
-                update_tags_n,
-                update_tags_m,
-                update_tags_d):
+def update_tags(pl2, update_tags_z, update_tags_n, update_tags_m, update_tags_d):
     """
-    Update special items with some tags (suspecious, nopdf, multiple pdf, duplicate)
+    Update special items with some tags
+
+    (suspecious, nopdf, multiple pdf, duplicate)
     """
 
-    new_tags = set_new_tag(update_tags_z,
-                           update_tags_n,
-                           update_tags_m,
-                           update_tags_d)
+    new_tags = set_new_tag(update_tags_z, update_tags_n, update_tags_m, update_tags_d)
     changed = []
     if not new_tags:
         pl2.info(":heavy_check_mark: Tags of the library are not changed.")
@@ -543,7 +540,10 @@ def update_tags(pl2,
             changed.append(ch)
 
         if any(changed):
-            pl2.warning(":warning: Library updated. You may want to re-load it")
+            pl2.warning(
+                """:warning: Library updated.
+            You may want to sync!"""
+            )
         else:
             pl2.info(":heavy_check_mark: Tags of the library are not changed.")
 
@@ -591,8 +591,7 @@ def delete_duplicate_items(pl2):
     update_items, delete_items = init_update_delete_lists()
 
     if update_items:
-        with mylog.st_stdout("success"), mylog.st_stderr("code"):
-            logging.info("Deleting duplicate items ...")
+        st.code("Deleting duplicate items ...")
 
     # update first, so we don't delete parents of items we want to keep
     for update_item in update_items:
@@ -601,8 +600,7 @@ def delete_duplicate_items(pl2):
         deleted_or_updated = True
 
     if delete_items:
-        with mylog.st_stdout("success"), mylog.st_stderr("code"):
-            logging.info("Deleting from library ...")
+        st.code("Deleting from library ...")
 
     #  now delete: DANGER AREA!
     for delete_item in delete_items:
@@ -637,9 +635,7 @@ def delete_duplicate_pdf(pl2):
             # Should not be deleted
             # here attachments are all named the same
             # -->  a sign of duplicates
-            with mylog.st_stdout("success"), mylog.st_stderr("code"):
-                logging.warning(f"Proceed deleting {files} ...")
-
+            st.info(f"Proceed deleting {files} ...")
             deleted_attachment = delete_pdf_attachments(cs, pl2)
 
         if deleted_attachment:
