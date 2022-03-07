@@ -14,9 +14,9 @@ def manual():
           - Items *without* pdf-files: `nopdf`
           - Items with *libraryCatalog* \"Zotero\": `todo_catalog`
           - Duplicate items: `duplicate_item`
-        :red_circle: **NOTE**: These options, need to calculate some lists,
+        :red_circle: **NOTE**: These options need to calculate some lists
         in case these are still empty, e.g.,
-        list of items with duplicate pdf attachments.
+        the list of items with duplicate pdf attachments.
 
         ---
 
@@ -36,9 +36,9 @@ def manual():
 
         Description:
           - Sort the Items with respect to added time (oldest first)
-          - Keep the oldest `Item` (first added), i.e. $I_1$
+          - Keep the oldest `Item` (first added), i.e., $I_1$
           - Move all attachments of the newest `Item` to $I_1$
-          - Delete other Items including their attachments ($I_2$ and $I_3$)
+          - Delete other items, including their attachments ($I_2$ and $I_3$)
 
          The result of the actions described above is:
 
@@ -49,14 +49,14 @@ def manual():
 
         **Remove duplicate pdf files**
 
-        Some items have duplicate pdf files, e.g. ['file1.pdf, file1.pdf']
+        Some items have duplicate pdf files, e.g. ['file1.pdf, file1.pdf'].
         In this case, all attachments are pdf files with the same name,
         only one attachment will be kept.
 
         :red_circle: **NOTE:**
-            If the pdf files have different names, nothing will be deleted.
-            This might be the case of items that are, for example,
-        having supplementary materials nebst the actual pdf file.
+            Nothing will be deleted if the pdf files have different names.  
+        This might be the case of items, for example,
+        supplementary materials nebst the actual pdf file.
         """
     )
 
@@ -66,8 +66,8 @@ def howto():
         """
         **Config file**
 
-        Before using this app, the following parameters should be defined:
-        - the `library_id`: Can be found by opening the
+        The following parameters should be defined, before using this app:
+        - the `library_id`: This can be found by opening the
           [group](https://www.zotero.org/groups)’s page
           and hovering over the group settings link.
         - the `api_key`: Can be found from
@@ -76,24 +76,26 @@ def howto():
            - own Zotero library --> user (*no tested*)
            - shared library --> group (*recommended*)
 
-        You can define all these necessary information in a config-file.
-        See
-        [here](https://github.com/chraibi/maintain-zotero/blob/main/config_template.cfg)
-        for an example.
+        You can define all this necessary information in a config file.
+        
+        :point_right: 
+        [Here](https://github.com/chraibi/maintain-zotero/blob/main/config_template.cfg)
+        is an example to use.
 
         ---
 
-        ### :warning: Before changing the library
-        :red_circle: **If you intend to change the Zotero library with
-        this app, then** :red_circle:
+        :warning: **Before changing the library** :warning:
+        
+        If you intend to change the Zotero library with
+        this app, then
 
         - Backup first
            See How to
            [locate, back up, and restore](https://www.zotero.org/support/zotero_data)
            your `Zotero` library data.
         -  Disable sync in your desktop client before using it.
-           You can sync manually the group by right-clicking
-           on it in your Zotero-client.
+           You can sync the group manually by right-clicking
+           on it in your Zotero client.
         """
     )
 
@@ -102,9 +104,9 @@ def about():
 
     msg = st.markdown(
         """ The app offers several functionalities
-    to ease maintenance of Zotero libraries.
+    to ease the maintenance of Zotero libraries.
 
-    Some functionalities **read** only from an online Zotero library
+    Some functionalities are **read-only** from an online Zotero library
     and produce reports.
 
     Others, however, **change** the online Zotero library.

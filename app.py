@@ -105,9 +105,8 @@ if __name__ == "__main__":
     st.sidebar.markdown("-------")
     st.title(":mortar_board: Maintaining Zotero libraries")
     st.header("")
-
-    h1, _, h2, _, h3 = st.columns((1, 0.02, 1, 0.02, 1))
-    h1.markdown("##### :information_source: About (expand for more)")
+    h1, _, h2, _, h3 = st.columns((7, 1, 7, 1, 7))
+    h1.markdown("##### :information_source: About")
     with h1.expander("", expanded=False):
         utils.about()
 
