@@ -3,6 +3,7 @@ import logging
 import os
 import time
 from collections import defaultdict
+from io import StringIO
 from pathlib import Path
 
 import streamlit as st
@@ -129,16 +130,25 @@ if __name__ == "__main__":
         type=["cfg", "txt"],
         help="Load config file with group ID, API-key and library type",
     )
+    logging.info(f"config_file: {config_file}")
     placeholder = st.sidebar.empty()
     st.sidebar.markdown("-------")
     msg_status = st.sidebar.empty()
     if config_file:
+        configFilePath = os.path.join(ROOT_DIR, config_file.name)
+        confParser = configparser.ConfigParser()
         logging.info(f"path: {path}")
         logging.info(f"ROOT_DIR: {ROOT_DIR}")
-        configFilePath = os.path.join(ROOT_DIR, config_file.name)
+        logging.info(f"config_file.name: {config_file.name}")
+        logging.info(f"configFilePath: {configFilePath}")
+        logging.info(config_file)
+        
         try:
-            confParser = configparser.RawConfigParser()
             confParser.read(configFilePath)
+        except Exception as e:
+            logging.info(f"can not read file {configFilePath} with error {str(e)}")
+
+        try:
             library_id = int(confParser.get("zotero-config", "library_id"))
             api_key = confParser.get("zotero-config", "api_key")
             library_type = confParser.get("zotero-config", "library_type")
