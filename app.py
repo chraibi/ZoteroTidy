@@ -62,10 +62,8 @@ def progress(max_run, my_bar):
 def update_session_state():
     # st.session_state.versions = {}
     # {key:version} of all elements (items+children)
-    st.session_state.zot_version = \
-            st.session_state.zot.last_modified_version()
-    st.session_state.num_items = st.session_state.zot.num_items()
-    print("num_items", st.session_state.num_items)
+    st.session_state.zot_version = st.session_state.zot.last_modified_version()
+    st.session_state.num_items = st.session_state.zot.num_items()    
     st.session_state.multpdf_items = []
     st.session_state.init_multpdf_items = False
     st.session_state.pdfs = defaultdict(list)
@@ -129,12 +127,19 @@ if __name__ == "__main__":
     st.sidebar.markdown("-------")
     st.title(":mortar_board: Sanity checks to maintain Zotero libraries")
     st.header("")
-    st.markdown("## :information_source: About this app (expand for more)")
-    with st.expander("", expanded=False):  # @todo: more
-        st.header("This app reports and/or updates an online Zotero library")
+    
+    h1, _, h2, _, h3 = st.columns((1, 0.02, 1, 0.02, 1))
+    h1.markdown("##### :information_source: About (expand for more)")
+    with h1.expander("", expanded=False):
+        utils.about()
 
-        # Sanity checks
-        utils.intro()
+    h2.markdown("##### 	:speech_balloon: How to use")
+    with h2.expander("", expanded=False):  # @todo: more
+        utils.howto()
+
+    h3.markdown("##### :round_pushpin: Features")
+    with h3.expander("", expanded=False):  # @todo: more                
+        utils.manual()
 
     config_file = st.sidebar.file_uploader(
         "📙Choose a config file ",
@@ -160,22 +165,20 @@ if __name__ == "__main__":
             st.stop()
 
         if not st.session_state.num_items:
-            st.session_state.zot = zotero.Zotero(library_id,
-                                                 library_type,
-                                                 api_key)
+            st.session_state.zot = zotero.Zotero(library_id, library_type, api_key)
             st.session_state.num_items = st.session_state.zot.num_items()
-            st.session_state.zot_version = \
-                st.session_state.zot.last_modified_version()
+            st.session_state.zot_version = st.session_state.zot.last_modified_version()
             msg_status.success("Config loaded!")
 
         if not utils.uptodate():
             update_library = placeholder.button("🔁 Sync Library")
             if update_library:
                 placeholder.empty()
-                msg_status.info(""":heavy_check_mark: Library synced!
-                You can load items!""")
+                msg_status.info(
+                    """:heavy_check_mark: Library synced!
+                You can load items!"""
+                )
                 update_session_state()
-
 
         lf = st.form("load_form")
         max_items = lf.slider(
@@ -210,12 +213,10 @@ if __name__ == "__main__":
                 c1.write("**Report options**")
                 c2.write("**Update options**")
                 update_tags_z = c2.checkbox(
-                    "Update Tags of suspecious items",
-                    help="add tag todo_catalog"
+                    "Update Tags of suspecious items", help="add tag todo_catalog"
                 )
                 update_tags_n = c2.checkbox(
-                    "Update Tags of items with no pdf",
-                    help="add tag nopdf"
+                    "Update Tags of items with no pdf", help="add tag nopdf"
                 )
                 update_tags_m = c2.checkbox(
                     "Update Tags of items with multiple pdf",
@@ -226,12 +227,12 @@ if __name__ == "__main__":
                     help="add tag duplicate_item",
                 )
                 report_duplicates = c1.checkbox(
-                    "Show Duplicate Items",
+                    "Duplicate Items",
                     help="""Duplicate items based on
                     DOI/ISBN""",
                 )
                 report_duplicates_title = c1.checkbox(
-                    "Show Duplicate Items (Title)",
+                    "Duplicate Items (Title)",
                     help="""Duplicate items based on
                     title""",
                 )
@@ -242,16 +243,16 @@ if __name__ == "__main__":
                     DOI/ISBN and merge them""",
                 )
                 report_duplicate_pdf = c1.checkbox(
-                    "Show Items with Multiple PDF",
+                    "Items with Multiple PDF",
                     help="""Items having more than
                     one pdf file (first run is slow!)""",
                 )
                 report_without_pdf = c1.checkbox(
-                    "Show Items without PDF",
+                    "Items without PDF",
                     help="""Items having no pdf files""",
                 )
                 report_standalone = c1.checkbox(
-                    "Show Standalone items",
+                    "Standalone items",
                     help="""Standlalone items like
                     PDF or Notes""",
                 )
@@ -267,36 +268,34 @@ if __name__ == "__main__":
                 )
 
                 head = c1.checkbox(
-                    "Show items",
-                    help="""Show titles of at most the first 10 items"""
+                    "Head", help="""Show titles of at most the first 10 items"""
                 )
                 suspecious = c1.checkbox(
-                    "Show suspecious items",
+                    "Suspecious items",
                     help="""Items with libraryCatalog = Zotero""",
                 )
-                trash = c1.checkbox("Trash status",
-                                    help="""Does not require reloading library""")
+                trash = c1.checkbox(
+                    "Trash status", help="""Does not require reloading library"""
+                )
                 start = config.form_submit_button(label="🚦Start")
                 pl2 = st.empty()
                 if start:
                     if not utils.uptodate():
                         msg_status.error(":fire: Library is out of sync.")
-                        
+
                     if head:
                         num_head = 10
-                        with mylog.st_stdout("success"),\
-                             mylog.st_stderr("code"):
+                        with mylog.st_stdout("success"), mylog.st_stderr("code"):
 
                             for item in st.session_state.zot_items[:num_head]:
                                 utils.log_title(item)
 
                     if trash:
-                        trash_empty = utils.trash_is_empty(
-                            st.session_state.zot)
+                        trash_empty = utils.trash_is_empty(st.session_state.zot)
                         if trash_empty:
-                            pl2.info(":heavy_check_mark: Trash is empty!")
+                            st.info(":heavy_check_mark: Trash is empty!")
                         else:
-                            pl2.warning(":x: Trash is not empty!")
+                            st.warning(":x: Trash is not empty!")
 
                     if report_duplicates_title:
                         duplicates = utils.duplicates_by_title(
@@ -304,13 +303,12 @@ if __name__ == "__main__":
                         )
 
                         if duplicates:
-                            pl2.warning(f":x: Duplicate items: {len(duplicates)}")
+                            st.warning(f":x: Duplicate items: {len(duplicates)}")
                         else:
-                            pl2.info(":heavy_check_mark: No duplicate items found.")
+                            st.info(":heavy_check_mark: No duplicate items found.")
 
                         for d in duplicates:
-                            with mylog.st_stdout("success"),\
-                                 mylog.st_stderr("code"):
+                            with mylog.st_stdout("success"), mylog.st_stderr("code"):
 
                                 logging.info(d)
 
@@ -324,16 +322,15 @@ if __name__ == "__main__":
                             )
 
                         if st.session_state.no_doi_isbn_items:
-                            pl2.warning(
+                            st.warning(
                                 f""":x: Items with no doi and no isbn:
                                 {len(st.session_state.no_doi_isbn_items)}"""
                             )
                         else:
-                            pl2.info(":heavy_check_mark: No items without doi and isbn")
+                            st.info(":heavy_check_mark: No items without doi and isbn")
 
                         for d in st.session_state.no_doi_isbn_items:
-                            with mylog.st_stdout("success"),\
-                                 mylog.st_stderr("code"):
+                            with mylog.st_stdout("success"), mylog.st_stderr("code"):
 
                                 logging.info(f"{d}")
 
@@ -343,13 +340,12 @@ if __name__ == "__main__":
 
                         duplicates = st.session_state.doi_dupl_items
                         if duplicates:
-                            pl2.warning(f":x: Duplicate items: {len(duplicates)}")
+                            st.warning(f":x: Duplicate items: {len(duplicates)}")
                         else:
-                            pl2.info(":heavy_check_mark: No duplicate items found.")
+                            st.info(":heavy_check_mark: No duplicate items found.")
 
                         for d in duplicates:
-                            with mylog.st_stdout("success"),\
-                                 mylog.st_stderr("code"):
+                            with mylog.st_stdout("success"), mylog.st_stderr("code"):
 
                                 utils.log_title(d)
 
@@ -360,14 +356,15 @@ if __name__ == "__main__":
                         )
 
                         if not standalones:
-                            pl2.info(":heavy_check_mark: No standalone items")
+                            st.info(":heavy_check_mark: No standalone items")
                         else:
-                            pl2.warning(f"""
-                            :x: Standalone item(s): {len(standalones)}""")
+                            st.warning(
+                                f"""
+                            :x: Standalone item(s): {len(standalones)}"""
+                            )
 
                         for d in standalones:
-                            with mylog.st_stdout("success"),\
-                                 mylog.st_stderr("code"):
+                            with mylog.st_stdout("success"), mylog.st_stderr("code"):
 
                                 logging.info(f"Type: {d}")
 
@@ -376,20 +373,20 @@ if __name__ == "__main__":
                         with st.spinner("processing ..."):
                             utils.update_duplicate_attach_state()
 
-                        t2 = time.process_time()
-                        pl2.info(t2 - t1)
+                        t2 = time.process_time()                        
                         msg_time = utils.get_time(t2 - t1)
                         msg_status.info(f"Items loaded in {msg_time}")
                         num_duplicates = len(st.session_state.multpdf_items)
                         if num_duplicates:
-                            pl2.warning(
+                            st.warning(
                                 f"""":x: Items with duplicate pdf files found:
                                 {num_duplicates}"""
                             )
                             for item in st.session_state.multpdf_items:
                                 item_key = item["key"]
-                                with mylog.st_stdout("success"),\
-                                     mylog.st_stderr("code"):
+                                with mylog.st_stdout("success"), mylog.st_stderr(
+                                    "code"
+                                ):
 
                                     ttt = item["data"]["title"]
                                     logging.info(f"""Title: {ttt}""")
@@ -397,19 +394,20 @@ if __name__ == "__main__":
                                         f"""PDF:{st.session_state.pdfs[item_key]}"""
                                     )
                         else:
-                            pl2.info(""":heavy_check_mark: No items with duplicate pdf attachments
-                            found""")
+                            st.info(
+                                """:heavy_check_mark: No items with duplicate pdf attachments
+                            found"""
+                            )
 
                     if report_without_pdf:
                         t1 = time.process_time()
                         utils.update_without_pdf_state()
-                        t2 = time.process_time()
-                        pl2.write(t2 - t1)
+                        t2 = time.process_time()                        
                         msg_time = utils.get_time(t2 - t1)
                         msg_status.info(f"Items loaded in {msg_time}")
                         num_duplicates = len(st.session_state.nopdf_items)
                         if num_duplicates:
-                            pl2.warning(
+                            st.warning(
                                 f"""
                             :x: Items with no pdf attachments:
                             {num_duplicates}"""
@@ -417,38 +415,39 @@ if __name__ == "__main__":
 
                             for item in st.session_state.nopdf_items:
                                 item_key = item["key"]
-                                with mylog.st_stdout("success"),\
-                                     mylog.st_stderr("code"):
+                                with mylog.st_stdout("success"), mylog.st_stderr(
+                                    "code"
+                                ):
 
                                     ttt = item["data"]["title"]
                                     logging.info(f"""Title: {ttt}""")
                         else:
-                            pl2.info(":heavy_check_mark: Items without pdf attachments not found")
+                            st.info(
+                                ":heavy_check_mark: Items without pdf attachments not found"
+                            )
 
                     if suspecious:
                         utils.update_suspecious_state()
                         num_suspecious = len(st.session_state.suspecious_items)
 
                         if num_suspecious:
-                            pl2.warning(f":x: Suspecious items: {num_suspecious}")
+                            st.warning(f":x: Suspecious items: {num_suspecious}")
                         else:
-                            pl2.info(":heavy_check_mark: No suspecious items found")
+                            st.info(":heavy_check_mark: No suspecious items found")
 
                         for item in st.session_state.suspecious_items:
                             item_key = item["key"]
-                            with mylog.st_stdout("success"),\
-                                 mylog.st_stderr("code"):
+                            with mylog.st_stdout("success"), mylog.st_stderr("code"):
 
                                 ttt = item["data"]["title"]
                                 logging.info(f"""{ttt}""")
 
-                    if update_tags_z \
-                       or update_tags_n \
-                       or update_tags_m \
-                       or update_tags_d:
+                    if update_tags_z or update_tags_n or update_tags_m or update_tags_d:
 
                         if not utils.uptodate():
-                            pl2.error(":skull_and_crossbones: Library not up-to-date. Reload!")
+                            st.error(
+                                ":skull_and_crossbones: Library not up-to-date."
+                            )
                         else:
                             utils.update_tags(
                                 pl2,
@@ -460,24 +459,28 @@ if __name__ == "__main__":
 
                     if delete_duplicates:
                         if not utils.uptodate():
-                            pl2.error(":skull_and_crossbones: Library not up-to-date. Reload!")
+                            st.error(
+                                ":skull_and_crossbones: Library not up-to-date."
+                            )
                         else:
                             with st.spinner("processing ..."):
                                 res = utils.delete_duplicate_items(pl2)
 
                             if res:
-                                pl2.info("Done!")
+                                st.info("Done!")
                             else:
-                                pl2.info(":heavy_check_mark: No duplicates to delete!")
+                                st.info(":heavy_check_mark: No duplicates to delete!")
 
-                    if delete_duplicate_pdf:                    
+                    if delete_duplicate_pdf:
                         if not utils.uptodate():
-                            pl2.error(":skull_and_crossbones: Library not up-to-date. Reload!")
+                            st.error(
+                                ":skull_and_crossbones: Library not up-to-date."
+                            )
                         else:
                             with st.spinner("processing ..."):
                                 res = utils.delete_duplicate_pdf(pl2)
 
                             if res:
-                                pl2.info("Done!")
+                                st.info("Done!")
                             else:
-                                pl2.info(":heavy_check_mark: Nothing to delete!")
+                                st.info(":heavy_check_mark: Nothing to delete!")

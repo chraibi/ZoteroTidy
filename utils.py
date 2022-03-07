@@ -9,13 +9,66 @@ DATE_FMT = "%Y-%m-%dT%XZ"
 STATUS_OK = True
 
 
-# @todo split this to two expander
-def intro():
+def manual():
     return st.markdown(
         """
-        The app offers several functionalitiest to simplify maintenance
-        of a Zotero library.
-        ### How to use?
+        **Tag library items:**
+          - Items with duplicate pdf-files: `duplicate_pdf`
+          - Items *without* pdf-files: `nopdf`
+          - Items with *libraryCatalog* \"Zotero\": `todo_catalog`
+          - Duplicate items: `duplicate_item`
+        :red_circle: **NOTE**: These options, need to calculate some lists,
+        in case these are still empty, e.g.,
+        list of items with duplicate pdf attachments.
+
+        ---
+
+       **Merge duplicates:**
+
+       We have duplicate `Items`, sorted with respect to the added date
+       (oldest first):
+
+       |Item|Number|Attachments |
+       :---: | :---: | :---: |
+       | $I_1$ |  1  | $PDF_1$ |
+       | $I_2$ | 3  | $NOTE_2$, $PDF_2$, $OTHER_2$ |
+       | $I_3$ | 2  | $NOTE_3$, $PDF_3$ |
+
+       :red_circle: **NOTE:**
+            Duplicate items are identified based on their DOI and/or ISBN
+
+        Description:
+          - Sort the Items with respect to added time (oldest first)
+          - Keep the oldest `Item` (first added), i.e. $I_1$
+          - Move all attachments of the newest `Item` to $I_1$
+          - Delete other Items including their attachments ($I_2$ and $I_3$)
+
+         The result of the actions described above is:
+
+         - $I_1$ having 3 attachments
+         - $PDF_1$, $NOTE_3$, $PDF_3$
+
+        ---
+
+        **Remove duplicate pdf files**
+
+        Some items have duplicate pdf files, e.g. ['file1.pdf, file1.pdf']
+        In this case, all attachments are pdf files with the same name,
+        only one attachment will be kept.
+
+        :red_circle: **NOTE:**
+            If the pdf files have different names, nothing will be deleted.
+            This might be the case of items that are, for example,
+        having supplementary materials nebst the actual pdf file.
+        """
+        )
+
+
+def howto():
+    return st.markdown(
+        """
+        **Config file**
+        
         Before using this app, the following parameters should be defined:
         - the `library_id`: Can be found by opening the
           [group](https://www.zotero.org/groups)’s page
@@ -31,6 +84,8 @@ def intro():
         [here](https://github.com/chraibi/maintain-zotero/blob/main/config_template.cfg)
         for an example.
 
+        ---
+
         ### :warning: Before changing the library
         :red_circle: **If you intend to change the Zotero library with
         this app, then** :red_circle:
@@ -42,54 +97,23 @@ def intro():
         -  Disable sync in your desktop client before using it.
            You can sync manually the group by right-clicking
            on it in your Zotero-client.
-
-        ---
-
-        ### Functionalities
-        Some functionalities **read** only from an online Zotero library
-        and produce reports.
-
-        Others, however, **change** the online Zotero library.
-        These can not be executed if the library is not in sync.
-
-        **Tag library items:**
-          - Items with duplicate pdf-files: `duplicate_pdf`
-          - Items *without* pdf-files: `nopdf`
-          - Items with *libraryCatalog* \"Zotero\": `todo_catalog`
-          - Duplicate items: `duplicate_item`
-        :red_circle: **NOTE**: These options, need to calculate some lists,
-        in case these are still empty, e.g.,
-        List items with duplicate pdf attachments.
-
-        ---
-
-       **Merge duplicates:**
-       We have duplicate `Items`, sorted with respect to the added date
-       (oldest first):
-
-       |Item|Number|Attachments |
-       :---: | :---: | :---: |
-       | $I_1$ |  1  | $PDF_1$ |
-       | $I_2$ | 3  | $NOTE_2$, $PDF_2$, $OTHER_2$ |
-       | $I_3$ | 2  | $NOTE_3$, $PDF_3$ |
-
-       :red_circle: **NOTE:**
-            Duplicate items are identified based on their DOI and/or ISBN
-
-        **Actions**
-          - Sort the Items with respect to added time (oldest first)
-          - Keep the oldest `Item` (first added), i.e. $I_1$
-          - Move all attachments of the newest `Item` to $I_1$
-          - Delete other Items including their attachments ($I_2$ and $I_3$)
-
-        **Result**
-
-         The result of the actions described above is:
-
-         - $I_1$ having 3 attachments
-         - $PDF_1$, $NOTE_3$, $PDF_3$
         """
     )
+
+
+def about():
+
+    msg = st.markdown(""" The app offers several functionalities
+    to ease maintenance of Zotero libraries.
+
+    Some functionalities **read** only from an online Zotero library
+    and produce reports.
+
+    Others, however, **change** the online Zotero library.
+    These can not be executed if the library is not in sync.
+    """)
+
+    return msg
 
 
 def date_added(_item):
