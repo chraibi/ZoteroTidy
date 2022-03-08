@@ -19,8 +19,8 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
-        "Get Help": "https://github.com/chraibi/maintain-zotero",
-        "Report a bug": "https://github.com/chraibi/maintain-zotero/issues",
+        "Get Help": "https://github.com/chraibi/ZoteroTidy",
+        "Report a bug": "https://github.com/chraibi/ZoteroTidy/issues",
         "About": "## ZooteroTidy is an App for Zotero Sanity Checks\n :copyright: Mohcine Chraibi",
     },
 )
@@ -103,7 +103,7 @@ if __name__ == "__main__":
     image = Image.open("logo.png")
     st.sidebar.image(image, use_column_width=True)
     gh = "https://badgen.net/badge/icon/GitHub?icon=github&label"
-    repo = "https://github.com/chraibi/maintain-zotero"
+    repo = "https://github.com/chraibi/ZoteroTidy"
     report_name = f"[![Repo]({gh})]({repo})"
     st.sidebar.markdown(report_name, unsafe_allow_html=True)
     st.sidebar.markdown("-------")

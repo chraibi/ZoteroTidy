@@ -323,7 +323,7 @@ def get_time(t):
 
     minutes = t // 60
     seconds = t % 60
-    return f"""{minutes:.0f} min:{seconds:.2f} sec"""
+    return f"""{minutes:.0f} min:{seconds:.0f} sec"""
 
 
 def duplicates_by_title(_items):
