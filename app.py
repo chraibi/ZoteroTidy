@@ -362,7 +362,7 @@ if __name__ == "__main__":
 
                         t2 = time.process_time()
                         msg_time = utils.get_time(t2 - t1)
-                        msg_status.info(f"Items loaded in {msg_time}")
+                        st.info(f"Items loaded in {msg_time}")
                         num_duplicates = len(st.session_state.multpdf_items)
                         if num_duplicates:
                             st.warning(f":x: Items with duplicate pdf files found: {num_duplicates}")
@@ -381,7 +381,7 @@ if __name__ == "__main__":
                         utils.update_without_pdf_state()
                         t2 = time.process_time()
                         msg_time = utils.get_time(t2 - t1)
-                        msg_status.info(f"Items loaded in {msg_time}")
+                        st.info(f"Items loaded in {msg_time}")
                         num_duplicates = len(st.session_state.nopdf_items)
                         if num_duplicates:
                             st.warning(
