@@ -1,6 +1,6 @@
 # ZoteroTidy
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/chraibi/maintain-zotero/main/app.py)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/chraibi/zoterotidy/main/app.py)
 
 This is a diagnostic tool to ease maintaining a Zotero library.
 
