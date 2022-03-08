@@ -721,9 +721,10 @@ def update_tags(pl2, update_tags_z, update_tags_n, update_tags_m, update_tags_d)
     :type update_tags_m: : Bool
     :param update_tags_m: : Duplicate items
     :type d: Bool
-    
+
     """
-     new_tags = set_new_tag(update_tags_z, update_tags_n, update_tags_m, update_tags_d)
+
+    new_tags = set_new_tag(update_tags_z, update_tags_n, update_tags_m, update_tags_d)
     changed = []
     if not new_tags:
         pl2.info(":heavy_check_mark: Tags of the library are not changed.")

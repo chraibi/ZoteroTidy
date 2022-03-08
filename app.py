@@ -112,17 +112,17 @@ if __name__ == "__main__":
     st.sidebar.markdown("-------")
     st.title(":mortar_board: Maintaining Zotero libraries")
     st.header("")
-    h1, _, h2, _, h3 = st.columns((7, 1, 7, 1, 7))
-    h1.markdown("##### :information_source: About")
-    with h1.expander("", expanded=False):
+    #h1, _, h2, _, h3 = st.columns((7, 1, 7, 1, 7))
+    st.markdown("##### :information_source: About")
+    with st.expander("", expanded=False):
         utils.about()
 
-    h2.markdown("##### 	:speech_balloon: How to use")
-    with h2.expander("", expanded=False):  # @todo: more
+    st.markdown("##### 	:speech_balloon: How to use")
+    with st.expander("", expanded=False):  # @todo: more
         utils.howto()
 
-    h3.markdown("##### :round_pushpin: Features")
-    with h3.expander("", expanded=False):  # @todo: more
+    st.markdown("##### :round_pushpin: Features")
+    with st.expander("", expanded=False):  # @todo: more
         utils.manual()
 
     config_file = st.sidebar.file_uploader(
@@ -138,7 +138,7 @@ if __name__ == "__main__":
         configFilePath = os.path.join(ROOT_DIR, config_file.name)
         confParser = configparser.RawConfigParser()
         stringio = StringIO(config_file.getvalue().decode("utf-8"))
-        string_data = stringio.read()       
+        string_data = stringio.read()
         try:
             confParser.read_string(string_data)
         except Exception as e:
