@@ -14,14 +14,14 @@ from pyzotero import zotero
 import utils
 
 st.set_page_config(
-    page_title="Zotero Sanity Checks",
+    page_title="ZoteroTidy",
     page_icon=":mortar_board:",
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
         "Get Help": "https://github.com/chraibi/maintain-zotero",
         "Report a bug": "https://github.com/chraibi/maintain-zotero/issues",
-        "About": "## Zotero Sanity Checks\n :copyright: Mohcine Chraibi",
+        "About": "## ZooteroTidy is an App for Zotero Sanity Checks\n :copyright: Mohcine Chraibi",
     },
 )
 
