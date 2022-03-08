@@ -342,9 +342,7 @@ if __name__ == "__main__":
                             utils.log_title(d)
 
                     if report_duplicates:
-                        with st.spinner("processing ..."):
-                            utils.update_duplicate_items_state()
-
+                        utils.update_duplicate_items_state()
                         duplicates = st.session_state.doi_dupl_items
                         if duplicates:
                             st.warning(f":x: Duplicate items: {len(duplicates)}")
@@ -372,6 +370,7 @@ if __name__ == "__main__":
                             utils.log_title(d)
 
                     if report_duplicate_pdf:
+                        utils.update_duplicate_attach_state()
                         num_duplicates = len(st.session_state.multpdf_items)
                         if num_duplicates:
                             st.warning(f":x: Items with duplicate pdf files found: {num_duplicates}")
@@ -386,6 +385,7 @@ if __name__ == "__main__":
                             )
 
                     if report_without_pdf:
+                        utils.update_without_pdf_state()
                         num_duplicates = len(st.session_state.nopdf_items)
                         if num_duplicates:
                             st.warning(
@@ -414,7 +414,6 @@ if __name__ == "__main__":
                             st.code(f"""{ttt}""")
 
                     if update_tags_z or update_tags_n or update_tags_m or update_tags_d:
-
                         if not utils.uptodate():
                             st.error(
                                 """:skull_and_crossbones: Library is not
