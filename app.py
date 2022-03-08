@@ -206,21 +206,22 @@ if __name__ == "__main__":
                 c1.write("**Report options**")
                 c2.write("**Update options**")
                 update_tags_z = c2.checkbox(
-                    "Update Tags of suspecious items", help="add tag todo_catalog"
+                    "Tag suspecious items", help="todo_catalog"
                 )
                 update_tags_n = c2.checkbox(
-                    "Update Tags of items with no pdf", help="add tag nopdf"
+                    "Tag items with no pdf", help="nopdf"
                 )
                 update_tags_m = c2.checkbox(
-                    "Update Tags of items with multiple pdf",
-                    help="add tag duplicate_pdf",
+                    "Tag items with multiple pdf",
+                    help="duplicate_pdf",
                 )
                 update_tags_d = c2.checkbox(
-                    "Update Tags of duplicate items",
-                    help="add tag duplicate_item",
+                    "Tag duplicate items",
+                    help="duplicate_item",
                 )
                 head = c1.checkbox(
-                    "Head", help="""Show titles of at most the first 10 items"""
+                    "Head",
+                    help="""Show titles of at most the first 10 items"""
                 )
                 report_duplicates = c1.checkbox(
                     "Duplicate Items (DOI/ISBN)",
@@ -273,6 +274,19 @@ if __name__ == "__main__":
                 start = config.form_submit_button(label="🚦Start")
                 pl2 = st.empty()
                 if start:
+                    # check write-options
+                    update_tags = update_tags_d \
+                        or update_tags_m \
+                        or update_tags_n \
+                        or update_tags_z
+
+                    if update_tags + \
+                       delete_duplicates + \
+                       delete_duplicate_pdf > 1:
+
+                        st.error("Can not have more than one write-opration")
+                        st.stop()
+
                     if not utils.uptodate():
                         msg_status.error(":fire: Library is out of sync.")
 
