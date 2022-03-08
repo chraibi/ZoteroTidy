@@ -2,7 +2,7 @@ import base64
 import configparser
 import logging
 import os
-import time
+import timeit
 from collections import defaultdict
 from io import StringIO
 from pathlib import Path
@@ -109,7 +109,6 @@ if __name__ == "__main__":
     st.sidebar.markdown("-------")
     st.title(":mortar_board: Maintaining Zotero libraries")
     st.header("")
-    #h1, _, h2, _, h3 = st.columns((7, 1, 7, 1, 7))
     st.markdown("##### :information_source: About")
     with st.expander("", expanded=False):
         utils.about()
@@ -181,7 +180,7 @@ if __name__ == "__main__":
             # update num of items when load
             update_session_state()
             msg_status.info(f"Retrieving {max_items} items from library ...")
-            t1 = time.process_time()
+            time_start = timeit.default_timer()
             st.session_state.zot_version = st.session_state.zot.last_modified_version()
             with st.spinner("Loading ..."):
                 st.session_state.zot_items = utils.retrieve_data(
@@ -190,15 +189,16 @@ if __name__ == "__main__":
                 st.session_state.children = utils.get_children()
 
             msg_status.info(f"Initialize children of {max_items} items ...")
-            t1 = time.process_time()
-            with st.spinner("Working ..."):
+
+            with st.spinner("Initializing ..."):
                 st.session_state.children = utils.get_children()
 
-            t2 = time.process_time()
+            time_end = timeit.default_timer()
 
             st.session_state.lib_loaded = True
-            msg_time = utils.get_time(t2 - t1)
-            msg_status.info(f"Library loaded and initialized in {msg_time}")
+
+            msg_time = utils.get_time(time_end - time_start)
+            msg_status.success(f":clock8: Finished in {msg_time}")
 
         if st.session_state.lib_loaded:
             config = st.form("config_form")
