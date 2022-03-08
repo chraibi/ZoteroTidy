@@ -77,15 +77,15 @@ def howto():
            - shared library --> group (*recommended*)
 
         You can define all this necessary information in a config file.
-        
+
         :point_right: 
         [Here](https://github.com/chraibi/maintain-zotero/blob/main/config_template.cfg)
         is an example to use.
 
         ---
 
-        :warning: **Before changing the library** :warning:
-        
+        :warning: **Before changing the library**
+
         If you intend to change the Zotero library with
         this app, then
 
@@ -123,9 +123,15 @@ def date_added(_item):
 
 def attachment_is_pdf(_child):
     """
-    True if attachment is pdf
+    True if item is pdf
 
+    Criteria according to this url
     # https://www.zotero.org/support/dev/web_api/v3/file_upload
+
+    :param _child:
+    :type _child:
+    :return: True is pdf
+
     """
 
     return (
@@ -136,9 +142,20 @@ def attachment_is_pdf(_child):
     )
 
 
-def get_suspecious_items(lib_items):
+def get_suspecious_items(_items):
+    """Items with libraryCatalog==Zotero
+
+    These items are suspecious, cause they were imported from
+    pdf files and maybe Zotero did not import the metadata properly.
+
+    :param _items: Zotero library items
+    :type _items: list containing dicts
+    :returns: list containing dicts
+
+    """
+
     list_catalog_zotero = []
-    for item in lib_items:
+    for item in _items:
         if "libraryCatalog" in item["data"]:
             catalog = item["data"]["libraryCatalog"]
             if catalog == "Zotero":
@@ -148,6 +165,15 @@ def get_suspecious_items(lib_items):
 
 
 def get_items_with_duplicate_pdf(_zot, _items):
+    """Items having several identical pdf files and their pdf files
+
+    :param _zot: A Zotero instance
+    :type _zot: pyzotero.zotero.Zotero
+    :param _items: Zotero library items
+    :type _items: list containing dicts
+    :returns: (list containing dicts, dict containing lists)
+
+    """
     _items_duplicate_attach = []
     _pdf_attachments = defaultdict(list)
     for _item in _items:
@@ -167,6 +193,14 @@ def get_items_with_duplicate_pdf(_zot, _items):
 
 
 def get_items_with_no_pdf_attachments2(_items):
+    """TODO describe function
+
+    :param _items: Zotero library items
+    :type _items: list containing dicts
+    :returns: list containing dicts 
+
+    """
+
     _items_without_attach = []
     for item in _items:
         if is_standalone(item):
@@ -185,6 +219,23 @@ def get_items_with_no_pdf_attachments2(_items):
 
 
 def get_items_with_no_pdf_attachments(_zot, _items):
+    """Single Items with no attachments
+
+    we need the Zotero instance, because we are going to
+    retrieve the children of items.
+
+    This operation is slow!
+    @todo: Since we iterate of the children in get_items_with_duplicate_pdf(_zot, _items)
+    maybe we can combine these functions and iterate only once.
+    
+    :param _zot: A Zotero instance
+    :type _zot: pyzotero.zotero.Zotero
+    :param _items: Zotero library items
+    :type _items: list containing dicts
+    :returns: list containing dicts
+
+    """
+    
     _items_without_attach = []
     for _item in _items:
         has_attach = False
@@ -205,6 +256,14 @@ def get_items_with_no_pdf_attachments(_zot, _items):
 
 
 def get_standalone_items(_items):
+    """ Standalone items with no metadata (notes, pdfs, etc) 
+
+    :param _items: Zotero library items
+    :type _items: list containing dicts
+    :returns: 
+
+    """
+    
     standalone = []
     for _item in _items:
         if is_standalone(_item):
@@ -214,29 +273,51 @@ def get_standalone_items(_items):
 
 
 def is_standalone(_item):
+    """Definition of a standalone item
+
+    :param _item: Zotero library item
+    :type _item: dict
+    :returns: True if standalone
+
+    """
+    
     return _item["data"]["itemType"] in ["note", "attachment"]
 
 
-def retrieve_data(zot, num_items):
-    """
-    Retrieve  top num_items data from zotero-library.
+def retrieve_data(_zot, _num_items):
+    """Retrieve <num_items> top-level Zotero library items.
 
-    Input:
-    zot: zotero instance
-    return:
-    items
+    :param _zot: A Zotero instance
+    :type _zot: pyzotero.zotero.Zotero
+    :param _num_items: Number if items to retrieve
+    :type _num_items: int
+    :returns: list of dicts
+
     """
-    lib_items = zot.top(limit=num_items)
+    lib_items = _zot.top(limit=_num_items)
     return lib_items
 
 
-def trash_is_empty(zot):
-    return len(zot.trash()) == 0
+def trash_is_empty(_zot):
+    """Is trash empty?
+    :todo: Maybe return len
+    :param _zot: A Zotero instance
+    :type _zot: pyzotero.zotero.Zotero
+
+    :returns: True if empty
+
+    """
+
+    return len(_zot.trash()) == 0
 
 
 def get_time(t):
-    """
-    Get str run time as min sec
+    """Time in min sec
+
+    :param t: Run time
+    :type t: float
+    :returns: str
+
     """
 
     minutes = t // 60
@@ -244,34 +325,53 @@ def get_time(t):
     return f"""{minutes:.0f} min:{seconds:.2f} sec"""
 
 
-def duplicates_by_title(lib_items):
+def duplicates_by_title(_items):
+    """ Duplicate items by Title
+
+    Some items do not have DOI not ISBN.
+    This functions compares items by title
+
+    :todo: Similar to duplicates_by_doi.
+    :todo: Return items not titles
+    :param _items: Zotero library items
+    :type _items: list containing dicts
+
+    :returns: list of str (titles)
+
+    """
     duplicate_items_by_title = defaultdict(list)
     duplicates = []
-    for item in lib_items:
+    for item in _items:
         if is_standalone(item):
             continue
 
-        # key = item["data"]["key"]
         iType = item["data"]["itemType"]
         Title = item["data"]["title"]
         duplicate_items_by_title[iType].append(Title.capitalize())
 
-    for Type in duplicate_items_by_title.keys():
-        num_duplicates_items = len(duplicate_items_by_title[Type]) - len(
-            set(duplicate_items_by_title[Type])
-        )
+    for _type, _titles in duplicate_items_by_title.items():
+        num_duplicates_items = len(_titles) - len(set(_titles))
         if num_duplicates_items:
-            duplicates = {
-                x
-                for x in duplicate_items_by_title[Type]
-                if duplicate_items_by_title[Type].count(x) > 1
-            }
+            duplicates = {x for x in _titles if _titles.count(x) > 1}
 
     return duplicates
 
 
-def duplicates_by_doi(lib_items):
-    by_doi = get_items_by_doi_or_isbn(lib_items)
+def duplicates_by_doi(_items):
+    """ Duplicate items by DOI/ISBN
+
+    Items are sorted by DOI/ISBN and then duplicates
+    are returned.
+
+    Similar to duplicates_by_title().
+
+    :param _items: Zotero library items
+    :type _items: list containing dicts
+    :returns: list of dicts
+
+    """
+
+    by_doi = get_items_by_doi_or_isbn(_items)
     result = []
     for _, items in by_doi.items():
         if len(items) > 1:
@@ -281,9 +381,16 @@ def duplicates_by_doi(lib_items):
     return result
 
 
-def get_items_by_doi_or_isbn(_lib_items):
+def get_items_by_doi_or_isbn(_items):
+    """Items having a DOI and/or ISBN
+
+    :param _items: Zotero library items
+    :returns: dict of lists
+
+    """
+
     _items_by_doi_isbn = defaultdict(list)
-    for _item in _lib_items:
+    for _item in _items:
         if "DOI" in _item["data"]:
             doi = _item["data"]["DOI"]
             if doi:
@@ -297,32 +404,44 @@ def get_items_by_doi_or_isbn(_lib_items):
     return _items_by_doi_isbn
 
 
-def get_items_with_empty_doi_isbn(_lib_items, field):
+def get_items_with_empty_doi_isbn(_items, _field):
     """
-    field in [DOI, ISBN]
+    Titles with no DOI or no ISBN. field in [DOI, ISBN]
+
+    :todo: rename to get_items_with_empty_doi_or_isbn
+    :todo: return items
+    :param _items: Zotero library items
+    :type _items: list containing dicts
+    :return: list of str
     """
-    empty = []
-    for _item in _lib_items:
-        if field in _item["data"]:
-            f = _item["data"][field]
+
+    empty_items = []
+    for _item in _items:
+        if _field in _item["data"]:
+            f = _item["data"][_field]
 
             if not f:
-                empty.append(_item["data"]["title"])
+                empty_items.append(_item["data"]["title"])
 
-    return empty
+    return empty_items
 
 
-def get_items_with_empty_doi_and_isbn(_lib_items, fields):
+def get_items_with_empty_doi_and_isbn(_items, _fields):
     """
-    return title of items with no isbn and no doi
+    Titles with no DOI and no ISBN.
 
-    fields is a list of str: ["DOI", "ISBN"]
+    :param _items: Zotero library items
+    :type _items: list containing dicts
+    :param _fields: DOI and ISBN
+    :type _fields: list of str
+    :return: list of dict
+
     """
 
     empty = []
-    for _item in _lib_items:
+    for _item in _items:
         result = []
-        for field in fields:
+        for field in _fields:
             if field in _item["data"]:
                 f = _item["data"][field]
                 if not f:
@@ -337,6 +456,18 @@ def get_items_with_empty_doi_and_isbn(_lib_items, fields):
 
 
 def delete_pdf_attachments(_children, pl2):
+    """Delete pdf attachments of an item and keep only one.
+
+    This functions changes the online Zotero library!
+
+    :param _children: Children items of a specific item
+    :type _children: list of dicts
+    :param pl2: placeholder to print messages
+    :type pl2: st.empty()
+    :returns: True if an attachment has been deleted.
+
+    """
+
     deleted_attachment = False
     zot = st.session_state.zot
     for child in _children[1:]:
@@ -351,6 +482,14 @@ def delete_pdf_attachments(_children, pl2):
 
 
 def log_title(_item):
+    """Log title of an item
+
+    :param _item: Zotero library item
+    :type _item: dict
+
+    :returns: st.code
+
+    """
     if is_standalone(_item):
         ttt = f"Standalone item of type: <{_item['data']['itemType']}>"
         if "filename" in _item["data"]:
@@ -362,10 +501,32 @@ def log_title(_item):
 
 
 def set_new_tag(z, n, m, d):
-    """Update tags. This function updates session_state if necessary
+    """Prepare list of tags to be added to items
 
-    if session_state lists are empty, update.
+    We have to add the tags to items at once.
+    Otherwise, we will have to update the library!
+
+    This function may update the session_state of some lists
+    (if session_state lists are empty)
+
+    These lists are:
+    - suspecious_items
+    - multpdf_items
+    - nopdf_items
+    - doi_dupl_items
+
+    :param z: Suspecious items
+    :type z: Bool
+    :param n: Items with no pdf
+    :type n: Bool
+    :param m: Items with multiple pdf
+    :type m: Bool
+    :param d: Duplicate items
+    :type d: Bool
+    :returns: dict of lists
+
     """
+
     new_tags = defaultdict(list)
     if z:
         update_suspecious_state()
@@ -398,6 +559,20 @@ def set_new_tag(z, n, m, d):
 
 
 def add_tag(tags_to_add, _zot, _item):
+    """Add tags to Zotero items
+
+    This function changes the online library
+
+    :todo: use zot from session_state
+    :param tags_to_add: dict prepared in set_new_tag()
+    :type tags_to_add: dict of lists
+    :param _zot: A Zotero instance
+    :type _zot: pyzotero.zotero.Zotero
+    :param _item: Zotero library item
+    :type _item: dict
+    :returns: True if changes have been made
+
+    """
     if not tags_to_add or is_standalone(_item):
         return False
 
@@ -414,6 +589,9 @@ def add_tag(tags_to_add, _zot, _item):
 
 
 def update_suspecious_state():
+    """ update suspecious_items
+
+    """
     if not st.session_state.suspecious_items:
         items = get_suspecious_items(st.session_state.zot_items)
         st.session_state.suspecious_items = items
@@ -421,6 +599,13 @@ def update_suspecious_state():
 
 # @todo check if state variable need to be used as input for functions
 def update_duplicate_attach_state():
+    """First update of lists related to multiple pdfs
+
+    - multpdf_items
+    - pdfs
+    - init_multpdf_items
+
+    """
     if not st.session_state.init_multpdf_items:
         items, pdfs = get_items_with_duplicate_pdf(
             st.session_state.zot, st.session_state.zot_items
@@ -432,6 +617,13 @@ def update_duplicate_attach_state():
 
 
 def force_update_duplicate_attach_state():
+    """Update of lists related to multiple pdfsrelated to multiple pdfs
+
+    - multpdf_items
+    - pdfs
+    - init_multpdf_items
+
+    """
     items, pdfs = get_items_with_duplicate_pdf(
         st.session_state.zot, st.session_state.zot_items
     )
@@ -442,6 +634,9 @@ def force_update_duplicate_attach_state():
 
 
 def update_duplicate_items_state():
+    """First update of duplicate items by doi
+
+    """
     if not st.session_state.init_doi_dupl_items:
         duplicates = duplicates_by_doi(st.session_state.zot_items)
         st.session_state.doi_dupl_items = duplicates
@@ -449,12 +644,19 @@ def update_duplicate_items_state():
 
 
 def force_update_duplicate_items_state():
+    """First update of duplicate items by doi
+
+    """
+
     duplicates = duplicates_by_doi(st.session_state.zot_items)
     st.session_state.doi_dupl_items = duplicates
     st.session_state.init_doi_dupl_items = True
 
 
 def update_without_pdf_state():
+    """First update of items without pdf
+
+    """
     if not st.session_state.nopdf_items:
         items = get_items_with_no_pdf_attachments2(st.session_state.zot_items)
 
@@ -466,9 +668,12 @@ def uptodate():
 
     every change in Zotero-Library increments
     the version number by one.
-    For example trash being emptied --> +1
+    For example, trash being emptied --> +1
     or note's content changed --> +1
+
+    :return: True if up-to-date
     """
+
     actual_st_version = st.session_state.zot_version
     last_modified_version = st.session_state.zot.last_modified_version()
 
@@ -479,6 +684,9 @@ def items_uptodate():
     """Check if items are outdated
 
     If outdated, don't execute any update-functions
+
+    :todo: not used
+    :return: True if all up-to-date
     """
 
     zot = st.session_state.zot
@@ -488,7 +696,7 @@ def items_uptodate():
     for item in st.session_state.zot_items:
         vc[item["key"]] = item["data"]["version"]
 
-    vs_reduced = {k: vs[k] for k in vc.keys()}
+    vs_reduced = {k: vs[k] for k, _ in vc.items()}
     print("----")
     print("vc: ", len(vc), vc)
     print("vs: ", len(vs), vs)
@@ -497,29 +705,25 @@ def items_uptodate():
     return vc == vs_reduced
 
 
-# def uptodate():
-#     """Check if library is outdated
-
-#     If outdated, don't execute any update-functions
-#     """
-#     most_recent_item_on_server = st.session_state.zot.top(limit=1)[0]
-#     first_item_in_cache = st.session_state.zot_items[0]
-
-#     v1 = most_recent_item_on_server["data"]["version"]
-#     v2 = first_item_in_cache["data"]["version"]
-#     print("v1", v1)
-#     print("v2", v2)
-#     return v1 == v2
-
-
 def update_tags(pl2, update_tags_z, update_tags_n, update_tags_m, update_tags_d):
     """
     Update special items with some tags
 
-    (suspecious, nopdf, multiple pdf, duplicate)
-    """
+    A wrapper function  of add_tag()
 
-    new_tags = set_new_tag(update_tags_z, update_tags_n, update_tags_m, update_tags_d)
+    :param pl2: placeholder to print messages
+    :type pl2: st.empty()
+    :param update_tags_z:  Suspecious items
+    :type update_tags_z:  Bool
+    :param update_tags_n:  Items with no pdf
+    :type update_tags_n: : Bool
+    :param update_tags_m: : Items with multiple pdf
+    :type update_tags_m: : Bool
+    :param update_tags_m: : Duplicate items
+    :type d: Bool
+    
+    """
+     new_tags = set_new_tag(update_tags_z, update_tags_n, update_tags_m, update_tags_d)
     changed = []
     if not new_tags:
         pl2.info(":heavy_check_mark: Tags of the library are not changed.")
@@ -551,6 +755,18 @@ def update_tags(pl2, update_tags_z, update_tags_n, update_tags_m, update_tags_d)
 
 
 def init_update_delete_lists():
+    """Initialize Items to update/delete
+
+    Prepare some lists of items to be updated and deleted
+
+    Note: 
+    - Duplicates without DOI not ISBN numbers are going to be ignored! 
+    - Duplicates with different DOI or ISBN will be missed as well!
+      (e.g. ISBN=0968-090X and ISBN=0968090X)
+
+    :returns: (update list, delete list)
+    
+    """
     DELETE_OWN_ATTACHMENTS = False  # @todo add option to ui
     zot = st.session_state.zot
     lib_items = st.session_state.zot_items
@@ -587,6 +803,19 @@ def init_update_delete_lists():
 
 
 def delete_duplicate_items(pl2):
+    """Delete duplicate items
+
+    Uses the update and delete lists
+    calculated in init_update_delete_lists()
+
+    if deleted, remove the tag "duplicate_item"
+    
+    :param pl2: placeholder to print messages
+    :type pl2: st.empty()
+     
+    :returns: True if items have been deleted and updated
+
+    """
     update_duplicate_items_state()
     zot = st.session_state.zot
     deleted_or_updated = False
@@ -623,6 +852,20 @@ def delete_duplicate_items(pl2):
 
 
 def delete_duplicate_pdf(pl2):
+    """Delete duplicate pdf files
+
+    This function is slow since it iterates over the children of the items
+    (network traffic)
+
+    If an item has several pdf files with the same name, then delete them and keep one.
+    In that case, delete the tag  (duplicate_pdf)
+    If an item has several pdf files with different names, then don't delete anything.
+    
+    :param pl2: placeholder to print messages
+    :type pl2: st.empty()
+    :returns: True if items have been deleted
+
+    """
     pl2.info("check list of items with duplicate pdfs")
     update_duplicate_attach_state()
     deleted_attachment = False
@@ -641,7 +884,7 @@ def delete_duplicate_pdf(pl2):
             deleted_attachment = delete_pdf_attachments(cs, pl2)
 
         if deleted_attachment:
-            zot.delete_tags("nopdf")
+            zot.delete_tags("duplicate_pdf")
             force_update_duplicate_attach_state()
 
     return deleted_attachment

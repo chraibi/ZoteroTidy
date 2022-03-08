@@ -130,7 +130,7 @@ if __name__ == "__main__":
         type=["cfg", "txt"],
         help="Load config file with group ID, API-key and library type",
     )
-    logging.info(f"config_file: {config_file}")
+
     placeholder = st.sidebar.empty()
     st.sidebar.markdown("-------")
     msg_status = st.sidebar.empty()
@@ -363,17 +363,14 @@ if __name__ == "__main__":
                         msg_status.info(f"Items loaded in {msg_time}")
                         num_duplicates = len(st.session_state.multpdf_items)
                         if num_duplicates:
-                            st.warning(
-                                f"""":x: Items with duplicate pdf files found:
-                                {num_duplicates}"""
-                            )
+                            st.warning(f":x: Items with duplicate pdf files found: {num_duplicates}")
                             for item in st.session_state.multpdf_items:
                                 item_key = item["key"]
                                 utils.log_title(item)
                                 st.code(f"> {st.session_state.pdfs[item_key]}")
                         else:
                             st.info(
-                                """:heavy_check_mark: No items with duplicate pdf attachments
+                                """ :heavy_check_mark: No items with duplicate pdf attachments
                                 found"""
                             )
 
@@ -386,10 +383,7 @@ if __name__ == "__main__":
                         num_duplicates = len(st.session_state.nopdf_items)
                         if num_duplicates:
                             st.warning(
-                                f"""
-                                :x: Items with no pdf attachments:
-                                {num_duplicates}"""
-                            )
+                                f":x: Items with no pdf attachments: {num_duplicates}")
 
                             for item in st.session_state.nopdf_items:
                                 utils.log_title(item)
