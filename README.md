@@ -1,53 +1,20 @@
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/chraibi/maintain-zotero/main/app.py)
+
 # Maintain-zotero
 
-These notebooks do two different operations:
+This is a diagnostic tool to ease maintaining a Zotero library. 
 
-1. detect items with multiple attachments, then delete the duplicates,
-keeping only one attachment.
+It implements some functionalities as: 
 
-2. detect duplicate items and merge them.
+- List all duplicate items and/or merge them.
+- List all items with no pdf files
+- List all items with duplicate pdf files and/or delete them (but one).
+- List standanlone items 
+- List items with some flaws, e.g. missing doi/isbn numbers or "ill-formes".
+- Update and/or delete some tags
+- ...
 
-`Zotero`, can detect duplicates and merge them. However, this [operation](https://www.zotero.org/support/duplicate_detection)
-can only be done manually.
 
-## Before usage
-
-| :warning: WARNING          |
-|:---------------------------|
-| Do not use these notebooks without first backing up your data.     |
-
-These functions modify the library hosted on [zotero.org](http://zotero.org).
-
-Therefore
-
-1. **Backup** first. See How to
-   [locate, back up, and restore](https://www.zotero.org/support/zotero_data)
-   your `Zotero` library data.
-2. Disable sync in your desktop client before using it
-3. Copy [config_template.cfg](config_template.cfg) in a new file called `config.cfg`,
-   then populate it with the necessary information.
-
-See notenbooks for more information.
-
-## Usage
-
-Since, these operations alter the `Zotero` library on the server, it is better,
-to run the notebooks individually and **sync the group inbetween**.
-
-For example: 
-
-1. backup the library
-2. manualy sync the library
-3. [delete duplicate attachments](remove_duplicate_attachments.ipynb)
-4. manualy sync the library
-5. [merge duplicate items](merge_duplicate_items.ipynb)
-6. manualy sync the library
-
-Detailed documentation inside the notebooks.
-
-## Requirements
-
-These notebooks uses [Pyzotero documentation](https://pyzotero.readthedocs.io/en/latest/).
 
 ## Example 
 
@@ -73,4 +40,4 @@ Output:
 
 ## Credits
 
-Some parts of the merging notebook are adapted from [zotero-cleanup](https://github.com/christianbrodbeck/zotero-cleanup).
+Some parts of the merging function are adapted from [zotero-cleanup](https://github.com/christianbrodbeck/zotero-cleanup).
