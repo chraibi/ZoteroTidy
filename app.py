@@ -57,11 +57,11 @@ def update_session_state():
     st.session_state.doi_dupl_items = []
     st.session_state.init_doi_dupl_items = False
     st.session_state.no_doi_isbn_items = []
-
+    st.session_state.children = utils.get_children()
 
 if __name__ == "__main__":
-    # if "items_versions" not in st.session_state:
-    #     st.session_state.items_versions = {}
+    if "children" not in st.session_state:
+        st.session_state.children = {}
 
     if "zot" not in st.session_state:
         st.session_state.zot = ""
@@ -156,11 +156,9 @@ if __name__ == "__main__":
 
         if not st.session_state.num_items:
             st.session_state.zot = zotero.Zotero(library_id, library_type, api_key)
-
             st.session_state.num_items = st.session_state.zot.num_items()
             st.session_state.zot_version = st.session_state.zot.last_modified_version()
             msg_status.success("Config loaded!")
-
 
         update_library = placeholder.button("🔁 Sync Library")
         if update_library:
@@ -192,10 +190,16 @@ if __name__ == "__main__":
                     st.session_state.zot, max_items
                 )
 
+            msg_status.info(f"Initialize children of {max_items} items ...")
+            t1 = time.process_time()
+            with st.spinner("Working ..."):
+                st.session_state.children = utils.get_children()
+
             t2 = time.process_time()
+
             st.session_state.lib_loaded = True
             msg_time = utils.get_time(t2 - t1)
-            msg_status.info(f"Items loaded in {msg_time}")
+            msg_status.info(f"Library loaded and initialized in {msg_time}")
 
         if st.session_state.lib_loaded:
             config = st.form("config_form")

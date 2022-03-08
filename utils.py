@@ -78,7 +78,7 @@ def howto():
 
         You can define all this necessary information in a config file.
 
-        :point_right: 
+        :point_right:
         [Here](https://github.com/chraibi/maintain-zotero/blob/main/config_template.cfg)
         is an example to use.
 
@@ -89,7 +89,7 @@ def howto():
         If you intend to change the Zotero library with
         this app, then
 
-        - **Backup first.**  
+        - **Backup first.**
            See How to
            [locate, back up, and restore](https://www.zotero.org/support/zotero_data)
            your `Zotero` library data.
@@ -181,7 +181,7 @@ def get_items_with_duplicate_pdf(_zot, _items):
             continue
 
         key = _item["key"]
-        cs = _zot.children(key)
+        cs = st.session_state.children[key]
         for c in cs:
             if attachment_is_pdf(c):
                 _pdf_attachments[key].append(c["data"]["filename"])
@@ -197,7 +197,7 @@ def get_items_with_no_pdf_attachments2(_items):
 
     :param _items: Zotero library items
     :type _items: list containing dicts
-    :returns: list containing dicts 
+    :returns: list containing dicts
 
     """
 
@@ -225,9 +225,10 @@ def get_items_with_no_pdf_attachments(_zot, _items):
     retrieve the children of items.
 
     This operation is slow!
-    @todo: Since we iterate of the children in get_items_with_duplicate_pdf(_zot, _items)
+    @todo: Since we iterate of the children in
+    get_items_with_duplicate_pdf(_zot, _items)
     maybe we can combine these functions and iterate only once.
-    
+
     :param _zot: A Zotero instance
     :type _zot: pyzotero.zotero.Zotero
     :param _items: Zotero library items
@@ -235,7 +236,7 @@ def get_items_with_no_pdf_attachments(_zot, _items):
     :returns: list containing dicts
 
     """
-    
+
     _items_without_attach = []
     for _item in _items:
         has_attach = False
@@ -243,7 +244,7 @@ def get_items_with_no_pdf_attachments(_zot, _items):
             continue
 
         key = _item["key"]
-        cs = _zot.children(key)
+        cs = st.session_state.children[key]
         for c in cs:
             if attachment_is_pdf(c):
                 has_attach = True
@@ -256,14 +257,14 @@ def get_items_with_no_pdf_attachments(_zot, _items):
 
 
 def get_standalone_items(_items):
-    """ Standalone items with no metadata (notes, pdfs, etc) 
+    """ Standalone items with no metadata (notes, pdfs, etc)
 
     :param _items: Zotero library items
     :type _items: list containing dicts
-    :returns: 
+    :returns: list of dicts
 
     """
-    
+
     standalone = []
     for _item in _items:
         if is_standalone(_item):
@@ -280,7 +281,7 @@ def is_standalone(_item):
     :returns: True if standalone
 
     """
-    
+
     return _item["data"]["itemType"] in ["note", "attachment"]
 
 
@@ -705,7 +706,11 @@ def items_uptodate():
     return vc == vs_reduced
 
 
-def update_tags(pl2, update_tags_z, update_tags_n, update_tags_m, update_tags_d):
+def update_tags(pl2,
+                update_tags_z,
+                update_tags_n,
+                update_tags_m,
+                update_tags_d):
     """
     Update special items with some tags
 
@@ -724,7 +729,10 @@ def update_tags(pl2, update_tags_z, update_tags_n, update_tags_m, update_tags_d)
 
     """
 
-    new_tags = set_new_tag(update_tags_z, update_tags_n, update_tags_m, update_tags_d)
+    new_tags = set_new_tag(update_tags_z,
+                           update_tags_n,
+                           update_tags_m,
+                           update_tags_d)
     changed = []
     if not new_tags:
         pl2.info(":heavy_check_mark: Tags of the library are not changed.")
@@ -760,16 +768,15 @@ def init_update_delete_lists():
 
     Prepare some lists of items to be updated and deleted
 
-    Note: 
-    - Duplicates without DOI not ISBN numbers are going to be ignored! 
+    Note:
+    - Duplicates without DOI not ISBN numbers are going to be ignored!
     - Duplicates with different DOI or ISBN will be missed as well!
       (e.g. ISBN=0968-090X and ISBN=0968090X)
 
     :returns: (update list, delete list)
-    
+
     """
     DELETE_OWN_ATTACHMENTS = False  # @todo add option to ui
-    zot = st.session_state.zot
     lib_items = st.session_state.zot_items
     by_doi = get_items_by_doi_or_isbn(lib_items)
     delete_items = []
@@ -783,10 +790,10 @@ def init_update_delete_lists():
         # keep oldest item
         keep = items[0]
         # keep latest attachments
-        keep_cs = zot.children(keep["key"])
+        keep_cs = st.session_state.children[keep["key"]]
         duplicates_have_pdf = False
         for item in items[-1:0:-1]:
-            cs = zot.children(item["key"])
+            cs = st.session_state.children[item["key"]]
             if cs:
                 for c in cs:
                     c["data"]["parentItem"] = keep["key"]
@@ -810,10 +817,10 @@ def delete_duplicate_items(pl2):
     calculated in init_update_delete_lists()
 
     if deleted, remove the tag "duplicate_item"
-    
+
     :param pl2: placeholder to print messages
     :type pl2: st.empty()
-     
+
     :returns: True if items have been deleted and updated
 
     """
@@ -858,10 +865,11 @@ def delete_duplicate_pdf(pl2):
     This function is slow since it iterates over the children of the items
     (network traffic)
 
-    If an item has several pdf files with the same name, then delete them and keep one.
-    In that case, delete the tag  (duplicate_pdf)
-    If an item has several pdf files with different names, then don't delete anything.
-    
+    If an item has several pdf files with the same name,
+    then delete them and keep one. In that case, delete the tag (duplicate_pdf)
+    If an item has several pdf files with different names,
+    then don't delete anything.
+
     :param pl2: placeholder to print messages
     :type pl2: st.empty()
     :returns: True if items have been deleted
@@ -875,7 +883,7 @@ def delete_duplicate_pdf(pl2):
     zot = st.session_state.zot
     for item in items_duplicate_attach:
         files = pdf_attachments[item["key"]]
-        cs = zot.children(item["key"])
+        cs = st.session_state.children[item["key"]]
         if len(set(files)) == 1 and len(files) > 1:
             # some items have different pdf files, like suppl materials.
             # Should not be deleted
@@ -889,3 +897,24 @@ def delete_duplicate_pdf(pl2):
             force_update_duplicate_attach_state()
 
     return deleted_attachment
+
+
+def get_children():
+    """Retrieve Children of Zotero items
+
+    This function generate some netweork traffic and is slow
+
+    :returns: dict
+
+    """
+    zot = st.session_state.zot
+    items = st.session_state.zot_items
+    children_dict = {}
+    for item in items:
+        key = item["key"]
+        if is_standalone(item):
+            continue
+
+        children_dict[key] = zot.children(key)
+
+    return children_dict
