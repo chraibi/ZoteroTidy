@@ -14,7 +14,9 @@ It implements some repetitive, simple, but annoyingly repetitive tasks such as:
 - Update and/or delete some tags
 - ...
 
-<img width="1139" alt="ZoteroLite" src="https://user-images.githubusercontent.com/5772973/157309426-0eb7013d-4ded-4697-88ab-a549bd0985b1.png">
+(YouTube-Video)
+
+[![Alt text](https://user-images.githubusercontent.com/5772973/157309426-0eb7013d-4ded-4697-88ab-a549bd0985b1.png)](https://www.youtube.com/watch?v=P_YeNXEOINk)
 
 ## Example
  
