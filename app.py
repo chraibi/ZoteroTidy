@@ -45,9 +45,6 @@ def progress(max_run, my_bar):
 
 
 def update_session_state():
-    # st.session_state.versions = {}
-    # {key:version} of all elements (items+children)
-    st.session_state.zot_version = st.session_state.zot.last_modified_version()
     st.session_state.num_items = st.session_state.zot.num_items()
     st.session_state.multpdf_items = []
     st.session_state.init_multpdf_items = False
@@ -57,7 +54,6 @@ def update_session_state():
     st.session_state.doi_dupl_items = []
     st.session_state.init_doi_dupl_items = False
     st.session_state.no_doi_isbn_items = []
-    st.session_state.children = utils.get_children()
 
 if __name__ == "__main__":
     if "children" not in st.session_state:
@@ -164,8 +160,8 @@ if __name__ == "__main__":
         if update_library:
             placeholder.empty()
             msg_status.info(
-                """:heavy_check_mark: Library synced!
-                You can load items!"""
+                """:heavy_check_mark: Library synced!\n
+                🔴 Load items!"""
             )
             update_session_state()
 
@@ -185,10 +181,12 @@ if __name__ == "__main__":
             update_session_state()
             msg_status.info(f"Retrieving {max_items} items from library ...")
             t1 = time.process_time()
+            st.session_state.zot_version = st.session_state.zot.last_modified_version()
             with st.spinner("Loading ..."):
                 st.session_state.zot_items = utils.retrieve_data(
                     st.session_state.zot, max_items
                 )
+                st.session_state.children = utils.get_children()
 
             msg_status.info(f"Initialize children of {max_items} items ...")
             t1 = time.process_time()
