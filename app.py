@@ -8,7 +8,6 @@ from io import StringIO
 from pathlib import Path
 
 import streamlit as st
-from PIL import Image
 from pyzotero import zotero
 
 import utils
@@ -56,7 +55,11 @@ def update_session_state():
     st.session_state.init_doi_dupl_items = False
     st.session_state.no_doi_isbn_items = []
 
+
 if __name__ == "__main__":
+    if "old_configs" not in st.session_state:
+        st.session_state.old_configs = ""
+
     if "children" not in st.session_state:
         st.session_state.children = {}
 
@@ -100,12 +103,15 @@ if __name__ == "__main__":
         st.session_state.no_doi_isbn_items = []
 
     # UI --------------------------------
-    image = Image.open("logo.png")
-    st.sidebar.image(image, use_column_width=True)
+    st.sidebar.image("logo.png", use_column_width=True)
+    yt_video = "https://www.youtube.com/watch?v=P_YeNXEOINk"
     gh = "https://badgen.net/badge/icon/GitHub?icon=github&label"
     repo = "https://github.com/chraibi/ZoteroTidy"
-    report_name = f"[![Repo]({gh})]({repo})"
-    st.sidebar.markdown(report_name, unsafe_allow_html=True)
+
+    sc1, _, sc2 = st.sidebar.columns((2, 1, 2))
+    repo_name = f"[![Repo]({gh})]({repo})"
+    sc1.markdown(repo_name, unsafe_allow_html=True)
+    sc2.markdown(f"[![YT]({utils.yt_icon})]({yt_video})", unsafe_allow_html=True)
     st.sidebar.markdown("-------")
     st.title(":mortar_board: Maintaining Zotero libraries")
     st.header("")
@@ -126,7 +132,6 @@ if __name__ == "__main__":
         type=["cfg", "txt"],
         help="Load config file with group ID, API-key and library type",
     )
-
     placeholder = st.sidebar.empty()
     st.sidebar.markdown("-------")
     msg_status = st.sidebar.empty()
@@ -137,6 +142,11 @@ if __name__ == "__main__":
         string_data = stringio.read()
         try:
             confParser.read_string(string_data)
+            # Maybe file's content or even the file itself changed?
+            if string_data != st.session_state.old_configs:
+                st.session_state.num_items = 0
+                st.session_state.old_configs = string_data
+
         except Exception as e:
             logging.info(f"can not read file {configFilePath} with error {str(e)}")
         try:
@@ -182,14 +192,12 @@ if __name__ == "__main__":
             msg_status.info(f"Retrieving {max_items} items from library ...")
             time_start = timeit.default_timer()
             st.session_state.zot_version = st.session_state.zot.last_modified_version()
-            with st.spinner("Loading ..."):
-                st.session_state.zot_items = utils.retrieve_data(
-                    st.session_state.zot, max_items
-                )
-                st.session_state.children = utils.get_children()
+
+            st.session_state.zot_items = utils.retrieve_data(
+                st.session_state.zot, max_items)
+
 
             msg_status.info(f"Initialize children of {max_items} items ...")
-
             with st.spinner("Initializing ..."):
                 st.session_state.children = utils.get_children()
 

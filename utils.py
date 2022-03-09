@@ -1,9 +1,10 @@
 from collections import defaultdict
 from datetime import datetime
-
+import logging
 import streamlit as st
 
 DATE_FMT = "%Y-%m-%dT%XZ"
+yt_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAB2klEQVRIS8WWSy8DURTHOxMJbQgJmz5Sn4AF0qXUK76DJbGz8YiVEGzVxraWfAMrbdQSkQhfQJg+oo0FqUqjU7/TdBgyk2lrGpPcnnvPPef/v+fcc++t4ql/gUDAp6rqkK7rPYauFQnGKxh3mUzmTfwV+fH7/bOKohzR7W8F1MKngG4OklNFVs7gwUVwg69ANGElFApFCOnCpZX/gAE3IgRROmftICCCiX8jKBJRio1/Rpaq1eoLsmKKUmWuV8bMddP6GEcZyn5+fXYRVDAeS6fTN82kjWIZwf6Kphp+dgQJymumGXDDFpIE/SkngjgEi78JcA6jf5Ss2JFjE2duwYkgBtCaBcEeqRunrWualrIi4cDGmF9xItiBYMuKAN1qXX9CaS/lcrl7sx0RbDPe/CuBRtXsZrPZQ4DMleVplMAyRcFgcAPgMpVxQIpKNinaJ0XLThFYbnIjVUUEEtW8E0GSPZhuBNBin5LoJp0IdFIRIcfXzZBQQaOk5xIfx4MmuO+0cxyekHJVlJFF5IdMou9A+JCdVFMXUt4RWbnXvKh/veyayY6trRFB2x8cL3mUJ3PAlWV/g+SJYLD26FO/cnseu0iSB0se/USNQD6eTqmAYTf+toBza5z2T0qH/Q2OKb2sAAAAAElFTkSuQmCC"
 
 
 def manual():
@@ -295,7 +296,25 @@ def retrieve_data(_zot, _num_items):
     :returns: list of dicts
 
     """
-    lib_items = _zot.top(limit=_num_items)
+    limit = 100  # determined by the API
+    start = 0
+    lib_items = []
+    i = 1
+    step = int(limit * 100 / _num_items)
+    read_items = 0
+    my_bar = st.progress(0)
+    while read_items < _num_items:
+        progress_by = (i+1) * step
+        i += 1
+        lib_items.extend(_zot.top(limit=limit, start=start))
+        read_items += limit
+        start = start + limit
+        if _num_items - read_items < limit:
+            progress_by = 100
+
+        logging.info(f"Read {len(lib_items)} / {_num_items} items")
+        my_bar.progress(progress_by)
+
     return lib_items
 
 
@@ -380,6 +399,24 @@ def duplicates_by_doi(_items):
                 result.append(i)
 
     return result
+
+
+# @todo: separate doi from isbn
+# doi and issn for papers
+# isbn for books and book sections
+
+def _get_books_without_isbn(_items):
+    # item['data']['itemType']
+    # = book, bookSection
+    # item['data']['title']
+    return
+
+
+def get_items_by_isbn(_items):
+    return
+
+def  duplicates_by_isbn(_items):
+    return
 
 
 def get_items_by_doi_or_isbn(_items):
@@ -494,7 +531,7 @@ def log_title(_item):
     if is_standalone(_item):
         ttt = f"Standalone item of type: <{_item['data']['itemType']}>"
         if "filename" in _item["data"]:
-            ttt += f", title {_item['data']['filename']}"
+            ttt += f" ({_item['data']['filename']})"
     else:
         ttt = f"{_item['data']['title']}"
 
