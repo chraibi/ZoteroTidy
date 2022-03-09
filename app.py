@@ -111,7 +111,7 @@ if __name__ == "__main__":
     sc1, _, sc2 = st.sidebar.columns((2, 1, 2))
     repo_name = f"[![Repo]({gh})]({repo})"
     sc1.markdown(repo_name, unsafe_allow_html=True)
-    sc2.markdown(f"[![YT]({utils.yt_icon})]({yt_video})", unsafe_allow_html=True)
+    sc2.markdown(f"[![YT]({utils.yt_icon()})]({yt_video})", unsafe_allow_html=True)
     st.sidebar.markdown("-------")
     st.title(":mortar_board: Maintaining Zotero libraries")
     st.header("")
