@@ -124,6 +124,21 @@ def date_added(_item):
     return datetime.strptime(_item["data"]["dateAdded"], DATE_FMT)
 
 
+def get_item(key, _items):
+    """Get item by key
+
+    :param key: key of item
+    :type key: str
+    :param _items: Zotero items
+    :type _Items: list of dicts
+    :returns: dict
+
+    """
+    for item in _items:
+        if item['key'] == key:
+            return item
+
+
 def attachment_is_pdf(_child):
     """
     True if item is pdf
@@ -284,8 +299,9 @@ def is_standalone(_item):
     :returns: True if standalone
 
     """
-
-    return _item["data"]["itemType"] in ["note", "attachment"]
+    # Zotero 6 write annotations in pdfs as a standalone item with parent being
+    # the pdf file!
+    return _item["data"]["itemType"] in ["note", "attachment", "annotation"]
 
 
 def retrieve_data(_zot, _num_items):
@@ -298,23 +314,26 @@ def retrieve_data(_zot, _num_items):
     :returns: list of dicts
 
     """
+    msg = st.empty()
+    logging.info(f"retrieve_data. trying to get {_num_items} items")
     limit = 100  # determined by the API
     start = 0
     lib_items = []
-    i = 1
+    count = 1
     step = int(limit * 100 / _num_items)
     read_items = 0
     my_bar = st.progress(0)
     while read_items < _num_items:
-        progress_by = (i+1) * step
-        i += 1
-        lib_items.extend(_zot.top(limit=limit, start=start))
+        progress_by = (count+1) * step
+        count += 1
+        lib_items.extend(_zot.items(limit=limit, start=start))
         read_items += limit
         start = start + limit
         if _num_items - read_items < limit:
             progress_by = 100
 
-        logging.info(f"Read {len(lib_items)} / {_num_items} items")
+        logging.info(f"read {len(lib_items)} / {_num_items} items")
+        msg.info(f"read {len(lib_items)} / {_num_items} items")
         my_bar.progress(progress_by)
 
     return lib_items
@@ -939,21 +958,37 @@ def delete_duplicate_pdf(pl2):
 
 
 def get_children():
-    """Retrieve Children of Zotero items
+    """Return Zotero children of items
 
-    This function generate some netweork traffic and is slow
-
-    :returns: dict
+    @todo: optimize the second loop
+    :param _items: Zotero items
+    :type _items: list of dict
+    :returns: list of dict
 
     """
-    zot = st.session_state.zot
-    items = st.session_state.zot_items
-    children_dict = {}
-    for item in items:
-        key = item["key"]
+    _items = st.session_state.zot_items
+    diff = defaultdict(list)
+    pk = defaultdict(list)
+    for i, item in enumerate(_items):
         if is_standalone(item):
             continue
 
-        children_dict[key] = zot.children(key)
+        key = item['key']
+        if 'numChildren' not in item['meta']:
+            print("What a type", item['data']['itemType'])
+            continue
 
-    return children_dict
+        if item['meta']['numChildren'] == 0:
+            pk[key] = []
+            diff[key] = 100
+            continue
+
+        # children should be near their parents
+        # @todo maybe optimize this loop later!
+        for k, child in enumerate(_items):
+            if 'parentItem' in child['data']:
+                if child['data']['parentItem'] == key:
+                    pk[key].append(child)
+                    diff[key] = abs(k-i)
+
+    return pk
