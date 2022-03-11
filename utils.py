@@ -1,9 +1,32 @@
+import logging
 from collections import defaultdict
 from datetime import datetime
-import logging
+
 import streamlit as st
+from unpywall import Unpywall
+from unpywall.utils import UnpywallCredentials
+
+
+def unpywall_credits(mail):
+    """Setup credidentials for unpaywall
+
+    :param mail: valid email-adress
+    :type mail: str
+    :returns:
+
+    """
+    try:
+        UnpywallCredentials.validate_email(mail)
+
+    except ValueError:
+        st.error(f"mail-adress {mail} is not valid.")
+        st.stop()
+
+    UnpywallCredentials(mail)
+
 
 DATE_FMT = "%Y-%m-%dT%XZ"
+
 
 def yt_icon():
     return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAB2klEQVRIS8WWSy8DURTHOxMJbQgJmz5Sn4AF0qXUK76DJbGz8YiVEGzVxraWfAMrbdQSkQhfQJg+oo0FqUqjU7/TdBgyk2lrGpPcnnvPPef/v+fcc++t4ql/gUDAp6rqkK7rPYauFQnGKxh3mUzmTfwV+fH7/bOKohzR7W8F1MKngG4OklNFVs7gwUVwg69ANGElFApFCOnCpZX/gAE3IgRROmftICCCiX8jKBJRio1/Rpaq1eoLsmKKUmWuV8bMddP6GEcZyn5+fXYRVDAeS6fTN82kjWIZwf6Kphp+dgQJymumGXDDFpIE/SkngjgEi78JcA6jf5Ss2JFjE2duwYkgBtCaBcEeqRunrWualrIi4cDGmF9xItiBYMuKAN1qXX9CaS/lcrl7sx0RbDPe/CuBRtXsZrPZQ4DMleVplMAyRcFgcAPgMpVxQIpKNinaJ0XLThFYbnIjVUUEEtW8E0GSPZhuBNBin5LoJp0IdFIRIcfXzZBQQaOk5xIfx4MmuO+0cxyekHJVlJFF5IdMou9A+JCdVFMXUt4RWbnXvKh/veyayY6trRFB2x8cL3mUJ3PAlWV/g+SJYLD26FO/cnseu0iSB0se/USNQD6eTqmAYTf+toBza5z2T0qH/Q2OKb2sAAAAAElFTkSuQmCC"
@@ -291,6 +314,29 @@ def get_standalone_items(_items):
     return standalone
 
 
+# zot.item_types()
+def is_book(_item):
+    """item is book
+
+    :param _item: Zotero library item
+    :type _item: dict
+    :returns: True of book or  bookSection
+
+    """
+    return _item['data']['itemType'] in ['book', 'bookSection']
+
+
+def is_article(_item):
+    """ Item is an article
+
+    :param _item: Zotero library item
+    :type _item: dict
+    :returns: True if conf, encyArt or journalArt
+
+    """
+    return _item['data']['itemType'] in ['conferencePaper', 'encyclopediaArticle', 'journalArticle']
+
+
 def is_standalone(_item):
     """Definition of a standalone item
 
@@ -436,8 +482,28 @@ def _get_books_without_isbn(_items):
 def get_items_by_isbn(_items):
     return
 
+
 def  duplicates_by_isbn(_items):
     return
+
+
+def get_items_by_doi(_items):
+    """Items having a DOI
+
+    :param _items: Zotero library items
+    :returns: dict of lists
+
+    """
+
+    _items_by_doi = defaultdict(list)
+    for _item in _items:
+        if "DOI" in _item["data"]:
+            doi = _item["data"]["DOI"]
+            if doi:
+                _items_by_doi[doi].append(_item)
+
+    return _items_by_doi
+
 
 
 def get_items_by_doi_or_isbn(_items):
@@ -463,31 +529,40 @@ def get_items_by_doi_or_isbn(_items):
     return _items_by_doi_isbn
 
 
-def get_items_with_empty_doi_isbn(_items, _field):
+def get_items_with_empty_doi_or_isbn(_items):
     """
     Titles with no DOI or no ISBN. field in [DOI, ISBN]
 
-    :todo: rename to get_items_with_empty_doi_or_isbn
-    :todo: return items
     :param _items: Zotero library items
     :type _items: list containing dicts
-    :return: list of str
+    :return: list of dicts
     """
 
     empty_items = []
     for _item in _items:
-        if _field in _item["data"]:
-            f = _item["data"][_field]
+        if is_standalone(_item):
+            continue
 
-            if not f:
-                empty_items.append(_item["data"]["title"])
+        if is_article(_item):
+            _field = "DOI"
+
+        elif is_book(_item):
+            _field = "ISBN"
+
+        else:
+            logging.warning(f"Type of item not known {_item[data][itemType]}")
+            st.warning(f"Type of item not known {_item[data][itemType]}")
+
+        if _field in _item["data"]:
+            if not _item["data"][_field]:
+                empty_items.append(_item)
 
     return empty_items
 
 
 def get_items_with_empty_doi_and_isbn(_items, _fields):
     """
-    Titles with no DOI and no ISBN.
+    Items with no DOI and no ISBN.
 
     :param _items: Zotero library items
     :type _items: list containing dicts
@@ -496,10 +571,12 @@ def get_items_with_empty_doi_and_isbn(_items, _fields):
     :return: list of dict
 
     """
-
     empty = []
     for _item in _items:
         result = []
+        if is_standalone(_item):
+            continue
+
         for field in _fields:
             if field in _item["data"]:
                 f = _item["data"][field]
@@ -549,6 +626,7 @@ def log_title(_item):
     :returns: st.code
 
     """
+
     if is_standalone(_item):
         ttt = f"Standalone item of type: <{_item['data']['itemType']}>"
         if "filename" in _item["data"]:
@@ -992,3 +1070,25 @@ def get_children():
                     diff[key] = abs(k-i)
 
     return pk
+
+
+# https://support.unpaywall.org/support/solutions/articles/44001900286
+# Which DOIs does Unpaywall cover?
+# The Unpaywall dataset only covers articles issued by one: Crossref.
+# We used to include DataCite DOIs, but we don't anymore.
+# In practice we added very little value because almost everything
+# with a DataCite DOI is OA.
+def get_oa_ca(_dois, pl2):
+    dois = list(_dois.keys())
+
+    logging.info(f"get_oa_ca(). Got {len(dois)} dois")
+    try:
+        articles = Unpywall.doi(dois=dois, errors='ignore', progress=True)
+    except Exception as e:
+        pl2.error(f"Connection error to Unpaywall {str(e)}")
+        logging.info(str(e))
+
+    oa_dois = list(articles['doi'][articles['is_oa']])
+    ca_dois = list(articles['doi'][~articles['is_oa']])
+
+    return oa_dois, ca_dois

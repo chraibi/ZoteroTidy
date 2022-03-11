@@ -10,6 +10,7 @@ import streamlit as st
 from pyzotero import zotero
 from pyzotero.zotero_errors import UserNotAuthorised
 
+
 import utils
 
 st.set_page_config(
@@ -45,7 +46,7 @@ def progress(max_run, my_bar):
 
 
 def update_session_state():
-    st.session_state.num_items = st.session_state.zot.count_items() #num_items()
+    st.session_state.num_items = st.session_state.zot.count_items()  #num_items()
     st.session_state.multpdf_items = []
     st.session_state.init_multpdf_items = False
     st.session_state.pdfs = defaultdict(list)
@@ -246,12 +247,14 @@ if __name__ == "__main__":
                     help="""Duplicate items based on
                     DOI/ISBN""",
                 )
-                report_duplicates_title = c1.checkbox(
-                    "Duplicate Items (Title)",
-                    help="""Duplicate items based on
-                    title""",
+                OA = c1.checkbox(
+                    "Open-Access",
+                    help="""Return Items that are not OA""",
                 )
-
+                mail = c1.text_input("Enter an Email-adress",
+                                        placeholder="mail@box.de",
+                                        help="""An email that is necessary for using the Unpaywall API service.""",
+                )
                 delete_duplicates = c2.checkbox(
                     "Merge Duplicate Items",
                     help="""Duplicate items based on
@@ -279,7 +282,7 @@ if __name__ == "__main__":
                     one pdf.""",
                 )
                 report_no_doi_isbn = c1.checkbox(
-                    "DOI & ISBN", help="Show items with no doi and no isbn"
+                    "DOI & ISBN", help="Articles with no doi and Books with no isbn"
                 )
 
                 suspecious = c1.checkbox(
@@ -311,8 +314,13 @@ if __name__ == "__main__":
                     if head:
                         num_head = 10
                         st.info(f"Top {num_head} items")
-                        for item in st.session_state.zot_items[:num_head]:
-                            utils.log_title(item)
+                        count = 0
+                        for item in st.session_state.zot_items:
+                            if not utils.is_standalone(item):
+                                utils.log_title(item)
+                                count += 1
+                                if count >= num_head:
+                                    break
 
                     if trash:
                         trash_empty = utils.trash_is_empty(st.session_state.zot)
@@ -321,37 +329,44 @@ if __name__ == "__main__":
                         else:
                             st.warning(":x: Trash is not empty!")
 
-                    if report_duplicates_title:
-                        duplicates = utils.duplicates_by_title(
-                            st.session_state.zot_items
-                        )
+                    if OA:
+                        utils.unpywall_credits(mail)
+                        time_start = timeit.default_timer()
+                        items_by_doi = utils.get_items_by_doi(st.session_state.zot_items)
+                        print(items_by_doi.keys())
+                        with st.spinner("Initializing ..."):
+                            OA_items, CA_items = utils.get_oa_ca(items_by_doi, pl2)
 
-                        if duplicates:
-                            st.warning(f":x: Duplicate items: {len(duplicates)}")
-                        else:
-                            st.info(":heavy_check_mark: No duplicate items found.")
+                        time_end = timeit.default_timer()                        
+                        msg_time = utils.get_time(time_end - time_start)
+                        msg_status.success(f":clock8: Finished in {msg_time}")
+                        total = len(items_by_doi)
+                        st.info(f":heavy_check_mark: found {len(OA_items)} / {total} open-access articles")
+                        if CA_items:
+                            st.warning(f":x: found {len(CA_items)} / {total} close-access articles")
 
-                        for d in duplicates:
-                            st.code(d)
+                        if total - len(OA_items) - len(CA_items):
+                            st.warning(f":interrobang: {total - len(OA_items) - len(CA_items)} DOIs could not be found by Unpaywall.")
+                            for doi, item in items_by_doi.items():
+                                doi = doi.lower()
+                                if doi not in OA_items and doi not in CA_items:
+                                    st.code(f"doi: <{doi}>")
 
                     if report_no_doi_isbn:
-                        fields = ["DOI", "ISBN"]
-                        if not st.session_state.no_doi_isbn_items:
-                            st.session_state.no_doi_isbn_items = (
-                                utils.get_items_with_empty_doi_and_isbn(
-                                    st.session_state.zot_items, fields
-                                )
-                            )
+
+                        st.session_state.no_doi_isbn_items = (
+                            utils.get_items_with_empty_doi_or_isbn(
+                                st.session_state.zot_items))
 
                         if st.session_state.no_doi_isbn_items:
                             st.warning(
-                                f""":x: Items with no doi and no isbn:
+                                f""":x: Items with no doi / isbn:
                                 {len(st.session_state.no_doi_isbn_items)}"""
                             )
                         else:
                             st.info(
                                 """:heavy_check_mark: No items without
-                            doi and isbn"""
+                            doi / isbn"""
                             )
 
                         for d in st.session_state.no_doi_isbn_items:
