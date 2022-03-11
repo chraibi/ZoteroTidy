@@ -1,4 +1,3 @@
-import base64
 import configparser
 import logging
 import os
@@ -9,6 +8,7 @@ from pathlib import Path
 
 import streamlit as st
 from pyzotero import zotero
+from pyzotero.zotero_errors import UserNotAuthorised
 
 import utils
 
@@ -45,7 +45,7 @@ def progress(max_run, my_bar):
 
 
 def update_session_state():
-    st.session_state.num_items = st.session_state.zot.num_items()
+    st.session_state.num_items = st.session_state.zot.count_items() #num_items()
     st.session_state.multpdf_items = []
     st.session_state.init_multpdf_items = False
     st.session_state.pdfs = defaultdict(list)
@@ -162,7 +162,15 @@ if __name__ == "__main__":
 
         if not st.session_state.num_items:
             st.session_state.zot = zotero.Zotero(library_id, library_type, api_key)
-            st.session_state.num_items = st.session_state.zot.num_items()
+            try:
+                st.session_state.num_items = st.session_state.zot.count_items()
+                if st.session_state.num_items == 1:
+                    st.warning(f"Not enough items in library. num_items = {st.session_state.num_items}")
+                    st.stop()
+            except UserNotAuthorised:
+                st.error("Connection refused. Invalid key ..")
+                st.stop()
+
             st.session_state.zot_version = st.session_state.zot.last_modified_version()
             msg_status.success("Config loaded!")
 
@@ -196,11 +204,11 @@ if __name__ == "__main__":
             st.session_state.zot_items = utils.retrieve_data(
                 st.session_state.zot, max_items)
 
-
             msg_status.info(f"Initialize children of {max_items} items ...")
             with st.spinner("Initializing ..."):
                 st.session_state.children = utils.get_children()
 
+            logging.info(f"num_items {st.session_state.zot.num_items()}, Got: {len(st.session_state.children)}")
             time_end = timeit.default_timer()
 
             st.session_state.lib_loaded = True
