@@ -29,7 +29,8 @@ def init_logger():
         datefmt='%Y-%m-%d %H:%M:%S'
     )
     logger = logging.getLogger()
-
+    logger.info("Loger initialised!")
+    
     return logfile, logger
 
 
