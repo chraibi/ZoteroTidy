@@ -553,8 +553,9 @@ if __name__ == "__main__":
                     logfile_path = os.path.join(ROOT_DIR, logfile)
                     logging.info(f"logfile: {logfile_path}")
                     with open(logfile_path, encoding='utf-8') as f:
+                        data = f.read()
                         T = dt.datetime.now()
                         # zot.groups() does not work, for reasons I dont know!
                         group_name = st.session_state.zot.collections()[0]['library']['name']
                         log_file = f"{group_name}_{T.year}-{T.month:02}-{T.day:02}_{T.hour:02}-{T.minute:02}-{T.second:02}.log"
-                        download = st.sidebar.download_button('Download log', f, file_name=log_file)
+                        download = st.sidebar.download_button('Download log', data, file_name=log_file)
