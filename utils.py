@@ -1,9 +1,32 @@
+import logging
 from collections import defaultdict
 from datetime import datetime
-import logging
+
 import streamlit as st
+from unpywall import Unpywall
+from unpywall.utils import UnpywallCredentials
+
+
+def unpywall_credits(mail):
+    """Setup credidentials for unpaywall
+
+    :param mail: valid email-adress
+    :type mail: str
+    :returns:
+
+    """
+    try:
+        UnpywallCredentials.validate_email(mail)
+
+    except ValueError:
+        st.error(f"mail-adress {mail} is not valid.")
+        st.stop()
+
+    UnpywallCredentials(mail)
+
 
 DATE_FMT = "%Y-%m-%dT%XZ"
+
 
 def yt_icon():
     return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAB2klEQVRIS8WWSy8DURTHOxMJbQgJmz5Sn4AF0qXUK76DJbGz8YiVEGzVxraWfAMrbdQSkQhfQJg+oo0FqUqjU7/TdBgyk2lrGpPcnnvPPef/v+fcc++t4ql/gUDAp6rqkK7rPYauFQnGKxh3mUzmTfwV+fH7/bOKohzR7W8F1MKngG4OklNFVs7gwUVwg69ANGElFApFCOnCpZX/gAE3IgRROmftICCCiX8jKBJRio1/Rpaq1eoLsmKKUmWuV8bMddP6GEcZyn5+fXYRVDAeS6fTN82kjWIZwf6Kphp+dgQJymumGXDDFpIE/SkngjgEi78JcA6jf5Ss2JFjE2duwYkgBtCaBcEeqRunrWualrIi4cDGmF9xItiBYMuKAN1qXX9CaS/lcrl7sx0RbDPe/CuBRtXsZrPZQ4DMleVplMAyRcFgcAPgMpVxQIpKNinaJ0XLThFYbnIjVUUEEtW8E0GSPZhuBNBin5LoJp0IdFIRIcfXzZBQQaOk5xIfx4MmuO+0cxyekHJVlJFF5IdMou9A+JCdVFMXUt4RWbnXvKh/veyayY6trRFB2x8cL3mUJ3PAlWV/g+SJYLD26FO/cnseu0iSB0se/USNQD6eTqmAYTf+toBza5z2T0qH/Q2OKb2sAAAAAElFTkSuQmCC"
@@ -135,7 +158,7 @@ def get_item(key, _items):
 
     """
     for item in _items:
-        if item['key'] == key:
+        if item["key"] == key:
             return item
 
 
@@ -211,9 +234,8 @@ def get_items_with_duplicate_pdf(_zot, _items):
 
 
 def get_items_with_no_pdf_attachments2(_items):
-    """TODO describe function
+    """Items with no pdf file
 
-    :param _items: Zotero library items
     :type _items: list containing dicts
     :returns: list containing dicts
 
@@ -221,8 +243,7 @@ def get_items_with_no_pdf_attachments2(_items):
 
     _items_without_attach = []
     for item in _items:
-        if is_standalone(item):
-            _items_without_attach.append(item)
+        if is_standalone(item) or is_file(item):
             continue
 
         if "attachment" in item["links"]:
@@ -236,46 +257,38 @@ def get_items_with_no_pdf_attachments2(_items):
     return _items_without_attach
 
 
-def get_items_with_no_pdf_attachments(_zot, _items):
-    """Single Items with no attachments
+# def get_items_with_no_pdf_attachments(_zot, _items):
+#     """Single Items with no attachments
 
-    we need the Zotero instance, because we are going to
-    retrieve the children of items.
+#     :param _zot: A Zotero instance
+#     :type _zot: pyzotero.zotero.Zotero
+#     :param _items: Zotero library items
+#     :type _items: list containing dicts
+#     :returns: list containing dicts
 
-    This operation is slow!
-    @todo: Since we iterate of the children in
-    get_items_with_duplicate_pdf(_zot, _items)
-    maybe we can combine these functions and iterate only once.
+#     """
 
-    :param _zot: A Zotero instance
-    :type _zot: pyzotero.zotero.Zotero
-    :param _items: Zotero library items
-    :type _items: list containing dicts
-    :returns: list containing dicts
+#     _items_without_attach = []
+#     for _item in _items:
+#         has_attach = False
+#         if is_standalone(_item):
+#             continue
 
-    """
+#         key = _item["key"]
+#         cs = st.session_state.children[key]
+#         for c in cs:
+#             if attachment_is_pdf(c):
+#                 has_attach = True
+#                 break
 
-    _items_without_attach = []
-    for _item in _items:
-        has_attach = False
-        if is_standalone(_item):
-            continue
+#         if not has_attach:
+#             _items_without_attach.append(_item)
 
-        key = _item["key"]
-        cs = st.session_state.children[key]
-        for c in cs:
-            if attachment_is_pdf(c):
-                has_attach = True
-                break
-
-        if not has_attach:
-            _items_without_attach.append(_item)
-
-    return _items_without_attach
+#     return _items_without_attach
 
 
 def get_standalone_items(_items):
-    """ Standalone items with no metadata (notes, pdfs, etc)
+    """Standalone items with no metadata (notes, pdfs, etc)
 
     :param _items: Zotero library items
     :type _items: list containing dicts
@@ -291,6 +304,44 @@ def get_standalone_items(_items):
     return standalone
 
 
+def is_file(_item):
+    """Definition of a file item
+
+    :param _item: Zotero library item
+    :type _item: dict
+    :returns: True if file
+
+    """
+    return _item["data"]["itemType"] in ["note", "attachment", "annotation"]
+
+
+# zot.item_types()
+def is_book(_item):
+    """item is book
+
+    :param _item: Zotero library item
+    :type _item: dict
+    :returns: True of book or  bookSection
+
+    """
+    return _item["data"]["itemType"] in ["book", "bookSection"]
+
+
+def is_article(_item):
+    """Item is an article
+
+    :param _item: Zotero library item
+    :type _item: dict
+    :returns: True if conf, encyArt or journalArt
+
+    """
+    return _item["data"]["itemType"] in [
+        "conferencePaper",
+        "encyclopediaArticle",
+        "journalArticle",
+    ]
+
+
 def is_standalone(_item):
     """Definition of a standalone item
 
@@ -301,7 +352,9 @@ def is_standalone(_item):
     """
     # Zotero 6 write annotations in pdfs as a standalone item with parent being
     # the pdf file!
-    return _item["data"]["itemType"] in ["note", "attachment", "annotation"]
+
+    return _item["data"]["itemType"] in ["note", "attachment", "annotation"] and \
+        "parentItem" not in _item["data"]
 
 
 def retrieve_data(_zot, _num_items):
@@ -324,7 +377,7 @@ def retrieve_data(_zot, _num_items):
     read_items = 0
     my_bar = st.progress(0)
     while read_items < _num_items:
-        progress_by = (count+1) * step
+        progress_by = (count + 1) * step
         count += 1
         lib_items.extend(_zot.items(limit=limit, start=start))
         read_items += limit
@@ -367,7 +420,7 @@ def get_time(t):
 
 
 def duplicates_by_title(_items):
-    """ Duplicate items by Title
+    """Duplicate items by Title
 
     Some items do not have DOI not ISBN.
     This functions compares items by title
@@ -399,7 +452,7 @@ def duplicates_by_title(_items):
 
 
 def duplicates_by_doi(_items):
-    """ Duplicate items by DOI/ISBN
+    """Duplicate items by DOI/ISBN
 
     Items are sorted by DOI/ISBN and then duplicates
     are returned.
@@ -426,6 +479,7 @@ def duplicates_by_doi(_items):
 # doi and issn for papers
 # isbn for books and book sections
 
+
 def _get_books_without_isbn(_items):
     # item['data']['itemType']
     # = book, bookSection
@@ -436,8 +490,27 @@ def _get_books_without_isbn(_items):
 def get_items_by_isbn(_items):
     return
 
-def  duplicates_by_isbn(_items):
+
+def duplicates_by_isbn(_items):
     return
+
+
+def get_items_by_doi(_items):
+    """Items having a DOI
+
+    :param _items: Zotero library items
+    :returns: dict of lists
+
+    """
+
+    _items_by_doi = defaultdict(list)
+    for _item in _items:
+        if "DOI" in _item["data"]:
+            doi = _item["data"]["DOI"]
+            if doi:
+                _items_by_doi[doi].append(_item)
+
+    return _items_by_doi
 
 
 def get_items_by_doi_or_isbn(_items):
@@ -463,31 +536,40 @@ def get_items_by_doi_or_isbn(_items):
     return _items_by_doi_isbn
 
 
-def get_items_with_empty_doi_isbn(_items, _field):
+def get_items_with_empty_doi_or_isbn(_items):
     """
     Titles with no DOI or no ISBN. field in [DOI, ISBN]
 
-    :todo: rename to get_items_with_empty_doi_or_isbn
-    :todo: return items
     :param _items: Zotero library items
     :type _items: list containing dicts
-    :return: list of str
+    :return: list of dicts
     """
 
     empty_items = []
     for _item in _items:
-        if _field in _item["data"]:
-            f = _item["data"][_field]
+        if is_standalone(_item) or is_file(_item):
+            continue
 
-            if not f:
-                empty_items.append(_item["data"]["title"])
+        if is_article(_item):
+            _field = "DOI"
+
+        elif is_book(_item):
+            _field = "ISBN"
+
+        else:
+            logging.warning(f"Type of item not known {_item['data']['itemType']}")
+            st.warning(f"Type of item not known {_item['data']['itemType']}")
+
+        if _field in _item["data"]:
+            if not _item["data"][_field]:
+                empty_items.append(_item)
 
     return empty_items
 
 
 def get_items_with_empty_doi_and_isbn(_items, _fields):
     """
-    Titles with no DOI and no ISBN.
+    Items with no DOI and no ISBN.
 
     :param _items: Zotero library items
     :type _items: list containing dicts
@@ -496,10 +578,12 @@ def get_items_with_empty_doi_and_isbn(_items, _fields):
     :return: list of dict
 
     """
-
     empty = []
     for _item in _items:
         result = []
+        if is_standalone(_item) or is_file(_item):
+            continue
+
         for field in _fields:
             if field in _item["data"]:
                 f = _item["data"][field]
@@ -534,6 +618,7 @@ def delete_pdf_attachments(_children, pl2):
             continue  # only for pdf files.
 
         pl2.warning(f"deleting {child['data']['filename']}")
+        logging.warning(f"deleting {child['data']['filename']}")
         zot.delete_item(child)
         deleted_attachment = True
 
@@ -545,10 +630,10 @@ def log_title(_item):
 
     :param _item: Zotero library item
     :type _item: dict
-
     :returns: st.code
 
     """
+
     if is_standalone(_item):
         ttt = f"Standalone item of type: <{_item['data']['itemType']}>"
         if "filename" in _item["data"]:
@@ -557,6 +642,7 @@ def log_title(_item):
         ttt = f"{_item['data']['title']}"
 
     st.code(f"{ttt}")
+    logging.info(f"{ttt}")
 
 
 def set_new_tag(z, n, m, d):
@@ -608,10 +694,8 @@ def set_new_tag(z, n, m, d):
     if d:
         update_duplicate_items_state()
         duplicate_items = st.session_state.doi_dupl_items
-        print(type(duplicate_items))
 
         for item in duplicate_items:
-            print(type(item), item)
             new_tags[item["data"]["key"]].append("duplicate_item")
 
     return new_tags
@@ -632,7 +716,7 @@ def add_tag(tags_to_add, _zot, _item):
     :returns: True if changes have been made
 
     """
-    if not tags_to_add or is_standalone(_item):
+    if not tags_to_add or is_standalone(_item) and is_file(_item):
         return False
 
     title = _item["data"]["title"]
@@ -643,14 +727,13 @@ def add_tag(tags_to_add, _zot, _item):
         return False
 
     st.code(f"add tags {new_tags} to {title}")
+    logging.info(f"add tags {new_tags} to {title}")
     _zot.add_tags(_item, *new_tags)
     return True
 
 
 def update_suspecious_state():
-    """ update suspecious_items
-
-    """
+    """update suspecious_items"""
     if not st.session_state.suspecious_items:
         items = get_suspecious_items(st.session_state.zot_items)
         st.session_state.suspecious_items = items
@@ -693,9 +776,7 @@ def force_update_duplicate_attach_state():
 
 
 def update_duplicate_items_state():
-    """First update of duplicate items by doi
-
-    """
+    """First update of duplicate items by doi"""
     if not st.session_state.init_doi_dupl_items:
         duplicates = duplicates_by_doi(st.session_state.zot_items)
         st.session_state.doi_dupl_items = duplicates
@@ -703,9 +784,7 @@ def update_duplicate_items_state():
 
 
 def force_update_duplicate_items_state():
-    """First update of duplicate items by doi
-
-    """
+    """First update of duplicate items by doi"""
 
     duplicates = duplicates_by_doi(st.session_state.zot_items)
     st.session_state.doi_dupl_items = duplicates
@@ -713,9 +792,7 @@ def force_update_duplicate_items_state():
 
 
 def update_without_pdf_state():
-    """First update of items without pdf
-
-    """
+    """First update of items without pdf"""
     if not st.session_state.nopdf_items:
         items = get_items_with_no_pdf_attachments2(st.session_state.zot_items)
 
@@ -764,11 +841,7 @@ def items_uptodate():
     return vc == vs_reduced
 
 
-def update_tags(pl2,
-                update_tags_z,
-                update_tags_n,
-                update_tags_m,
-                update_tags_d):
+def update_tags(pl2, update_tags_z, update_tags_n, update_tags_m, update_tags_d):
     """
     Update special items with some tags
 
@@ -787,10 +860,7 @@ def update_tags(pl2,
 
     """
 
-    new_tags = set_new_tag(update_tags_z,
-                           update_tags_n,
-                           update_tags_m,
-                           update_tags_d)
+    new_tags = set_new_tag(update_tags_z, update_tags_n, update_tags_m, update_tags_d)
     changed = []
     if not new_tags:
         pl2.info(":heavy_check_mark: Tags of the library are not changed.")
@@ -898,6 +968,7 @@ def delete_duplicate_items(pl2):
 
     if delete_items:
         st.code("Deleting from library ...")
+        logging.info("Deleting from library ...")
 
     #  now delete: DANGER AREA!
     for delete_item in delete_items:
@@ -909,6 +980,7 @@ def delete_duplicate_items(pl2):
 
     if not deleted_or_updated:
         pl2.info(":heavy_check_mark: Library has no duplicates!")
+        logging.info(":heavy_check_mark: Library has no duplicates!")
     else:
         zot.delete_tags("duplicate_item")
 
@@ -948,6 +1020,7 @@ def delete_duplicate_pdf(pl2):
             # here attachments are all named the same
             # -->  a sign of duplicates
             st.info(f"Proceed deleting {files} ...")
+            logging.info(f"Proceed deleting {files} ...")
             deleted_attachment = delete_pdf_attachments(cs, pl2)
 
         if deleted_attachment:
@@ -973,12 +1046,13 @@ def get_children():
         if is_standalone(item):
             continue
 
-        key = item['key']
-        if 'numChildren' not in item['meta']:
-            print("What a type", item['data']['itemType'])
+        key = item["key"]
+        if "numChildren" not in item["meta"]:
+            item_type = item["data"]["itemType"]
+            print(f"What a type: <{item_type}>")
             continue
 
-        if item['meta']['numChildren'] == 0:
+        if item["meta"]["numChildren"] == 0:
             pk[key] = []
             diff[key] = 100
             continue
@@ -986,9 +1060,29 @@ def get_children():
         # children should be near their parents
         # @todo maybe optimize this loop later!
         for k, child in enumerate(_items):
-            if 'parentItem' in child['data']:
-                if child['data']['parentItem'] == key:
+            if "parentItem" in child["data"]:
+                if child["data"]["parentItem"] == key:
                     pk[key].append(child)
-                    diff[key] = abs(k-i)
+                    diff[key] = abs(k - i)
 
     return pk
+
+
+# https://support.unpaywall.org/support/solutions/articles/44001900286
+# Which DOIs does Unpaywall cover?
+# The Unpaywall dataset only covers articles issued by one: Crossref.
+# We used to include DataCite DOIs, but we don't anymore.
+# In practice we added very little value because almost everything
+# with a DataCite DOI is OA.
+def get_oa_ca(_dois, pl2):
+    dois = list(_dois.keys())
+    try:
+        articles = Unpywall.doi(dois=dois, errors="ignore", progress=True)
+    except Exception as e:
+        pl2.error(f"Connection error to Unpaywall {str(e)}")
+        logging.info(str(e))
+
+    oa_dois = list(articles["doi"][articles["is_oa"]])
+    ca_dois = list(articles["doi"][~articles["is_oa"]])
+
+    return oa_dois, ca_dois

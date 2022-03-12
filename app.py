@@ -1,16 +1,32 @@
 import configparser
 import logging
 import os
+import sys
 import timeit
 from collections import defaultdict
 from io import StringIO
 from pathlib import Path
+import datetime as dt
 
 import streamlit as st
 from pyzotero import zotero
 from pyzotero.zotero_errors import UserNotAuthorised
-
 import utils
+
+
+def init_logger():
+    print("init logger")
+    logfile = 'logfile.log'
+    logging.basicConfig(
+        level=logging.INFO,
+        force=True,
+        format="%(levelname)s - %(asctime)s - %(message)s",
+        handlers=[logging.FileHandler(filename=logfile), logging.StreamHandler(sys.stdout)],
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    logger = logging.getLogger()
+
+    return logfile, logger
 
 st.set_page_config(
     page_title="ZoteroTidy",
@@ -45,7 +61,7 @@ def progress(max_run, my_bar):
 
 
 def update_session_state():
-    st.session_state.num_items = st.session_state.zot.count_items() #num_items()
+    st.session_state.num_items = st.session_state.zot.count_items()
     st.session_state.multpdf_items = []
     st.session_state.init_multpdf_items = False
     st.session_state.pdfs = defaultdict(list)
@@ -57,6 +73,16 @@ def update_session_state():
 
 
 if __name__ == "__main__":
+
+    if "init_logger" not in st.session_state:
+        st.session_state.init_logger = False
+
+    if "logger" not in st.session_state:
+        st.session_state.logger = ""
+
+    if "logfile" not in st.session_state:
+        st.session_state.logfile = ""
+
     if "old_configs" not in st.session_state:
         st.session_state.old_configs = ""
 
@@ -102,7 +128,17 @@ if __name__ == "__main__":
     if "no_doi_isbn_items" not in st.session_state:
         st.session_state.no_doi_isbn_items = []
 
-    # UI --------------------------------
+    if not st.session_state.init_logger:
+        logfile, logger = init_logger()
+        st.session_state.logger = logger
+        st.session_state.logfile = logfile
+        open(logfile, 'w').close()  # filemode in config does not work!
+        st.session_state.init_logger = True
+
+    # logger = st.session_state.logger
+    logfile = st.session_state.logfile
+
+    #  UI --------------------------------
     st.sidebar.image("logo.png", use_column_width=True)
     yt_video = "https://www.youtube.com/watch?v=P_YeNXEOINk"
     gh = "https://badgen.net/badge/icon/GitHub?icon=github&label"
@@ -111,7 +147,8 @@ if __name__ == "__main__":
     sc1, _, sc2 = st.sidebar.columns((2, 1, 2))
     repo_name = f"[![Repo]({gh})]({repo})"
     sc1.markdown(repo_name, unsafe_allow_html=True)
-    sc2.markdown(f"[![YT]({utils.yt_icon()})]({yt_video})", unsafe_allow_html=True)
+    sc2.markdown(f"[![YT]({utils.yt_icon()})]({yt_video})",
+                 unsafe_allow_html=True)
     st.sidebar.markdown("-------")
     st.title(":mortar_board: Maintaining Zotero libraries")
     st.header("")
@@ -148,7 +185,7 @@ if __name__ == "__main__":
                 st.session_state.old_configs = string_data
 
         except Exception as e:
-            logging.info(f"can not read file {configFilePath} with error {str(e)}")
+            logging.error(f"can not read file {configFilePath} with error {str(e)}")
         try:
             library_id = int(confParser.get("zotero-config", "library_id"))
             api_key = confParser.get("zotero-config", "api_key")
@@ -208,7 +245,7 @@ if __name__ == "__main__":
             with st.spinner("Initializing ..."):
                 st.session_state.children = utils.get_children()
 
-            logging.info(f"num_items {st.session_state.zot.num_items()}, Got: {len(st.session_state.children)}")
+            logging.info(f"num_items {st.session_state.zot.num_items()}, Num children: {len(st.session_state.children)}")
             time_end = timeit.default_timer()
 
             st.session_state.lib_loaded = True
@@ -246,12 +283,14 @@ if __name__ == "__main__":
                     help="""Duplicate items based on
                     DOI/ISBN""",
                 )
-                report_duplicates_title = c1.checkbox(
-                    "Duplicate Items (Title)",
-                    help="""Duplicate items based on
-                    title""",
+                OA = c1.checkbox(
+                    "Open-Access",
+                    help="""Return Items that are not OA""",
                 )
-
+                mail = c1.text_input("Enter an Email-adress",
+                                     placeholder="mail@box.com",
+                                     help="""An email that is necessary for using the Unpaywall API service.""",
+                )
                 delete_duplicates = c2.checkbox(
                     "Merge Duplicate Items",
                     help="""Duplicate items based on
@@ -279,7 +318,7 @@ if __name__ == "__main__":
                     one pdf.""",
                 )
                 report_no_doi_isbn = c1.checkbox(
-                    "DOI & ISBN", help="Show items with no doi and no isbn"
+                    "DOI & ISBN", help="Articles with no doi and Books with no isbn"
                 )
 
                 suspecious = c1.checkbox(
@@ -311,8 +350,14 @@ if __name__ == "__main__":
                     if head:
                         num_head = 10
                         st.info(f"Top {num_head} items")
-                        for item in st.session_state.zot_items[:num_head]:
-                            utils.log_title(item)
+                        logging.info(f"Top {num_head} items")
+                        count = 0
+                        for item in st.session_state.zot_items:
+                            if not utils.is_standalone(item):
+                                utils.log_title(item)
+                                count += 1
+                                if count >= num_head:
+                                    break
 
                     if trash:
                         trash_empty = utils.trash_is_empty(st.session_state.zot)
@@ -321,41 +366,58 @@ if __name__ == "__main__":
                         else:
                             st.warning(":x: Trash is not empty!")
 
-                    if report_duplicates_title:
-                        duplicates = utils.duplicates_by_title(
-                            st.session_state.zot_items
-                        )
+                    if OA:
+                        utils.unpywall_credits(mail)
+                        time_start = timeit.default_timer()
+                        items_by_doi = utils.get_items_by_doi(st.session_state.zot_items)
+                        with st.spinner("Initializing ..."):
+                            OA_items, CA_items = utils.get_oa_ca(items_by_doi, pl2)
 
-                        if duplicates:
-                            st.warning(f":x: Duplicate items: {len(duplicates)}")
-                        else:
-                            st.info(":heavy_check_mark: No duplicate items found.")
+                        time_end = timeit.default_timer()
+                        msg_time = utils.get_time(time_end - time_start)
+                        msg_status.success(f":clock8: Finished in {msg_time}")
+                        total = len(items_by_doi)
+                        st.info(f":heavy_check_mark: found {len(OA_items)} / {total} open-access articles")
+                        if CA_items:
+                            st.warning(f":x: found {len(CA_items)} / {total} close-access articles")
 
-                        for d in duplicates:
-                            st.code(d)
+                        logging.info(f"Open-Access dois ({len(OA_items)} / {total})\n")
+                        for i in OA_items:
+                            logging.info(f"doi: {i}")
+
+                        logging.info(f"Not Open-Access dois {len(CA_items)} / {total}\n")
+                        for i in CA_items:
+                            logging.info(f"doi: {i}")
+
+                        if total - len(OA_items) - len(CA_items):
+                            st.warning(f":interrobang: {total - len(OA_items) - len(CA_items)} DOIs could not be found by Unpaywall.")
+                            logging.warning(f"{total - len(OA_items) - len(CA_items)} DOIs could not be found by Unpaywall.\n")
+                            for doi, item in items_by_doi.items():
+                                doi = doi.lower()
+                                if doi not in OA_items and doi not in CA_items:
+                                    logging.info(f"doi: <{doi}>")
 
                     if report_no_doi_isbn:
-                        fields = ["DOI", "ISBN"]
-                        if not st.session_state.no_doi_isbn_items:
-                            st.session_state.no_doi_isbn_items = (
-                                utils.get_items_with_empty_doi_and_isbn(
-                                    st.session_state.zot_items, fields
-                                )
-                            )
+
+                        st.session_state.no_doi_isbn_items = (
+                            utils.get_items_with_empty_doi_or_isbn(
+                                st.session_state.zot_items))
 
                         if st.session_state.no_doi_isbn_items:
                             st.warning(
-                                f""":x: Items with no doi and no isbn:
+                                f""":x: Items with no doi / isbn:
                                 {len(st.session_state.no_doi_isbn_items)}"""
                             )
                         else:
                             st.info(
                                 """:heavy_check_mark: No items without
-                            doi and isbn"""
+                            doi / isbn"""
                             )
 
+                        logging.info("Items with no doi or no isbn: \n")
                         for d in st.session_state.no_doi_isbn_items:
                             utils.log_title(d)
+
 
                     if report_duplicates:
                         utils.update_duplicate_items_state()
@@ -365,6 +427,7 @@ if __name__ == "__main__":
                         else:
                             st.info(":heavy_check_mark: No duplicate items found.")
 
+                        logging.info("Duplicate items: \n")
                         for d in duplicates:
                             utils.log_title(d)
 
@@ -382,6 +445,7 @@ if __name__ == "__main__":
                             :x: Standalone item(s): {len(standalones)}"""
                             )
 
+                        logging.info("Standalone items:\n")
                         for d in standalones:
                             utils.log_title(d)
 
@@ -390,6 +454,7 @@ if __name__ == "__main__":
                         num_duplicates = len(st.session_state.multpdf_items)
                         if num_duplicates:
                             st.warning(f":x: Items with duplicate pdf files found: {num_duplicates}")
+                            logging.info("Items with duplicate pdf files:\n")
                             for item in st.session_state.multpdf_items:
                                 item_key = item["key"]
                                 utils.log_title(item)
@@ -406,7 +471,7 @@ if __name__ == "__main__":
                         if num_duplicates:
                             st.warning(
                                 f":x: Items with no pdf attachments: {num_duplicates}")
-
+                            logging.info("Items with not pdf attachments:\n")
                             for item in st.session_state.nopdf_items:
                                 utils.log_title(item)
                         else:
@@ -424,10 +489,9 @@ if __name__ == "__main__":
                         else:
                             st.info(":heavy_check_mark: No suspecious items found")
 
+                        logging.info("Suspecious items:\n")
                         for item in st.session_state.suspecious_items:
-                            item_key = item["key"]
-                            ttt = item["data"]["title"]
-                            st.code(f"""{ttt}""")
+                            utils.log(item)
 
                     if update_tags_z or update_tags_n or update_tags_m or update_tags_d:
                         if not utils.uptodate():
@@ -485,3 +549,10 @@ if __name__ == "__main__":
                                     """:heavy_check_mark:
                                 Nothing to delete!"""
                                 )
+                    # offer to downlod log after start
+                    with open(logfile, encoding='utf-8') as f:
+                        T = dt.datetime.now()
+                        # zot.groups() does not work, for reasons I dont know!
+                        group_name = st.session_state.zot.collections()[0]['library']['name']
+                        log_file = f"{group_name}_{T.year}-{T.month:02}-{T.day:02}_{T.hour:02}-{T.minute:02}-{T.second:02}.log"
+                        download = st.sidebar.download_button('Download log', f, file_name=log_file)
