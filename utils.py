@@ -1,4 +1,4 @@
-import logging
+import lovely_logger as logging
 from collections import defaultdict
 from datetime import datetime
 

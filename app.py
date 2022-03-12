@@ -1,19 +1,17 @@
 import configparser
-import logging
+import datetime as dt
 import os
-import sys
 import timeit
 from collections import defaultdict
 from io import StringIO
 from pathlib import Path
-import datetime as dt
 
+import lovely_logger as logging
 import streamlit as st
 from pyzotero import zotero
 from pyzotero.zotero_errors import UserNotAuthorised
-import utils
 
-import lovely_logger as log
+import utils
 
 path = Path(__file__)
 ROOT_DIR = path.parent.absolute()
@@ -22,10 +20,9 @@ ROOT_DIR = path.parent.absolute()
 def init_logger():
     logging.info("init_logger ")
     logfile = os.path.join(ROOT_DIR, 'logfile.log')
-    log.FILE_FORMAT = "[%(asctime)s] [%(levelname)-8s] - %(message)s"
-    log.CONSOLE_FORMAT = "[%(asctime)s] [%(levelname)-8s] - %(message)s"
-    log.DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
-    log.init(logfile)
+    logging.FILE_FORMAT = "[%(asctime)s] [%(levelname)-8s] - %(message)s"
+    logging.DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
+    logging.init(logfile)
 
     return logfile
 
@@ -349,8 +346,7 @@ if __name__ == "__main__":
                     if head:
                         num_head = 10
                         st.info(f"Top {num_head} items")
-                        logging.info(f"Top {num_head} items")
-                        log.info(f"Top {num_head} items")
+                        logging.info(f"Top {num_head} items")                       
                         count = 0
                         for item in st.session_state.zot_items:
                             if not utils.is_standalone(item):
