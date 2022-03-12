@@ -1,3 +1,4 @@
 streamlit
 pyzotero
 unpywall
+lovely-logger

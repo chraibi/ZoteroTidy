@@ -13,25 +13,21 @@ from pyzotero import zotero
 from pyzotero.zotero_errors import UserNotAuthorised
 import utils
 
+import lovely_logger as log
+
 path = Path(__file__)
 ROOT_DIR = path.parent.absolute()
 
 
 def init_logger():
-    logging.info("Init Logger")
+    logging.info("init_logger ")
     logfile = os.path.join(ROOT_DIR, 'logfile.log')
-    logging.basicConfig(
-        level=logging.INFO,
-        force=True,
-        format="%(levelname)s - %(asctime)s - %(message)s",
-        handlers=[logging.FileHandler(filename=logfile),
-                  logging.StreamHandler(sys.stdout)],
-        datefmt='%Y-%m-%d %H:%M:%S'
-    )
-    logger = logging.getLogger()
-    logger.info("Loger initialised!")
-    
-    return logfile, logger
+    log.FILE_FORMAT = "[%(asctime)s] [%(levelname)-8s] - %(message)s"
+    log.CONSOLE_FORMAT = "[%(asctime)s] [%(levelname)-8s] - %(message)s"
+    log.DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
+    log.init(logfile)
+
+    return logfile
 
 
 st.set_page_config(
@@ -132,13 +128,13 @@ if __name__ == "__main__":
         st.session_state.no_doi_isbn_items = []
 
     if not st.session_state.init_logger:
-        logfile, logger = init_logger()
-        st.session_state.logger = logger
+        logfile = init_logger()
+        # st.session_state.logger = logger
         st.session_state.logfile = logfile
         open(logfile, 'w').close()  # filemode in config does not work!
         st.session_state.init_logger = True
 
-    logger = st.session_state.logger
+    #logger = st.session_state.logger
     logfile = st.session_state.logfile
 
     #  UI --------------------------------
@@ -354,7 +350,7 @@ if __name__ == "__main__":
                         num_head = 10
                         st.info(f"Top {num_head} items")
                         logging.info(f"Top {num_head} items")
-                        logger.info(f"Top {num_head} items")
+                        log.info(f"Top {num_head} items")
                         count = 0
                         for item in st.session_state.zot_items:
                             if not utils.is_standalone(item):
