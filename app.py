@@ -550,7 +550,9 @@ if __name__ == "__main__":
                                 Nothing to delete!"""
                                 )
                     # offer to downlod log after start
-                    with open(logfile, encoding='utf-8') as f:
+                    logfile_path = os.path.join(ROOT_DIR, logfile)
+                    logging.info(f"logfile: {logfile_path}")
+                    with open(logfile_path, encoding='utf-8') as f:
                         T = dt.datetime.now()
                         # zot.groups() does not work, for reasons I dont know!
                         group_name = st.session_state.zot.collections()[0]['library']['name']
