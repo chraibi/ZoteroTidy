@@ -135,7 +135,7 @@ if __name__ == "__main__":
         open(logfile, 'w').close()  # filemode in config does not work!
         st.session_state.init_logger = True
 
-    # logger = st.session_state.logger
+    logger = st.session_state.logger
     logfile = st.session_state.logfile
 
     #  UI --------------------------------
@@ -351,6 +351,7 @@ if __name__ == "__main__":
                         num_head = 10
                         st.info(f"Top {num_head} items")
                         logging.info(f"Top {num_head} items")
+                        logger.info(f"Top {num_head} items")
                         count = 0
                         for item in st.session_state.zot_items:
                             if not utils.is_standalone(item):
