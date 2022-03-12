@@ -15,7 +15,7 @@ import utils
 
 
 def init_logger():
-    print("init logger")
+    logging.info("Init Logger")
     logfile = 'logfile.log'
     logging.basicConfig(
         level=logging.INFO,
@@ -556,6 +556,7 @@ if __name__ == "__main__":
                     with open(logfile_path, encoding='utf-8') as f:
                         data = f.read()
                         T = dt.datetime.now()
+                        logging.info(f"data: {len(data)}")
                         # zot.groups() does not work, for reasons I dont know!
                         group_name = st.session_state.zot.collections()[0]['library']['name']
                         log_file = f"{group_name}_{T.year}-{T.month:02}-{T.day:02}_{T.hour:02}-{T.minute:02}-{T.second:02}.log"
