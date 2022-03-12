@@ -234,9 +234,8 @@ def get_items_with_duplicate_pdf(_zot, _items):
 
 
 def get_items_with_no_pdf_attachments2(_items):
-    """TODO describe function
+    """Items with no pdf file
 
-    :param _items: Zotero library items
     :type _items: list containing dicts
     :returns: list containing dicts
 
@@ -244,8 +243,7 @@ def get_items_with_no_pdf_attachments2(_items):
 
     _items_without_attach = []
     for item in _items:
-        if is_standalone(item):
-            _items_without_attach.append(item)
+        if is_standalone(item) or is_file(item):
             continue
 
         if "attachment" in item["links"]:
@@ -259,42 +257,34 @@ def get_items_with_no_pdf_attachments2(_items):
     return _items_without_attach
 
 
-def get_items_with_no_pdf_attachments(_zot, _items):
-    """Single Items with no attachments
+# def get_items_with_no_pdf_attachments(_zot, _items):
+#     """Single Items with no attachments
 
-    we need the Zotero instance, because we are going to
-    retrieve the children of items.
+#     :param _zot: A Zotero instance
+#     :type _zot: pyzotero.zotero.Zotero
+#     :param _items: Zotero library items
+#     :type _items: list containing dicts
+#     :returns: list containing dicts
 
-    This operation is slow!
-    @todo: Since we iterate of the children in
-    get_items_with_duplicate_pdf(_zot, _items)
-    maybe we can combine these functions and iterate only once.
+#     """
 
-    :param _zot: A Zotero instance
-    :type _zot: pyzotero.zotero.Zotero
-    :param _items: Zotero library items
-    :type _items: list containing dicts
-    :returns: list containing dicts
+#     _items_without_attach = []
+#     for _item in _items:
+#         has_attach = False
+#         if is_standalone(_item):
+#             continue
 
-    """
+#         key = _item["key"]
+#         cs = st.session_state.children[key]
+#         for c in cs:
+#             if attachment_is_pdf(c):
+#                 has_attach = True
+#                 break
 
-    _items_without_attach = []
-    for _item in _items:
-        has_attach = False
-        if is_standalone(_item):
-            continue
+#         if not has_attach:
+#             _items_without_attach.append(_item)
 
-        key = _item["key"]
-        cs = st.session_state.children[key]
-        for c in cs:
-            if attachment_is_pdf(c):
-                has_attach = True
-                break
-
-        if not has_attach:
-            _items_without_attach.append(_item)
-
-    return _items_without_attach
+#     return _items_without_attach
 
 
 def get_standalone_items(_items):
@@ -312,6 +302,17 @@ def get_standalone_items(_items):
             standalone.append(_item)
 
     return standalone
+
+
+def is_file(_item):
+    """Definition of a file item
+
+    :param _item: Zotero library item
+    :type _item: dict
+    :returns: True if file
+
+    """
+    return _item["data"]["itemType"] in ["note", "attachment", "annotation"]
 
 
 # zot.item_types()
@@ -351,7 +352,9 @@ def is_standalone(_item):
     """
     # Zotero 6 write annotations in pdfs as a standalone item with parent being
     # the pdf file!
-    return _item["data"]["itemType"] in ["note", "attachment", "annotation"]
+
+    return _item["data"]["itemType"] in ["note", "attachment", "annotation"] and \
+        "parentItem" not in _item["data"]
 
 
 def retrieve_data(_zot, _num_items):
@@ -544,7 +547,7 @@ def get_items_with_empty_doi_or_isbn(_items):
 
     empty_items = []
     for _item in _items:
-        if is_standalone(_item):
+        if is_standalone(_item) or is_file(_item):
             continue
 
         if is_article(_item):
@@ -578,7 +581,7 @@ def get_items_with_empty_doi_and_isbn(_items, _fields):
     empty = []
     for _item in _items:
         result = []
-        if is_standalone(_item):
+        if is_standalone(_item) or is_file(_item):
             continue
 
         for field in _fields:
@@ -713,7 +716,7 @@ def add_tag(tags_to_add, _zot, _item):
     :returns: True if changes have been made
 
     """
-    if not tags_to_add or is_standalone(_item):
+    if not tags_to_add or is_standalone(_item) and is_file(_item):
         return False
 
     title = _item["data"]["title"]
@@ -1045,7 +1048,8 @@ def get_children():
 
         key = item["key"]
         if "numChildren" not in item["meta"]:
-            print("What a type", item["data"]["itemType"])
+            item_type = item["data"]["itemType"]
+            print(f"What a type: <{item_type}>")
             continue
 
         if item["meta"]["numChildren"] == 0:
