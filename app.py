@@ -13,20 +13,25 @@ from pyzotero import zotero
 from pyzotero.zotero_errors import UserNotAuthorised
 import utils
 
+path = Path(__file__)
+ROOT_DIR = path.parent.absolute()
+
 
 def init_logger():
     logging.info("Init Logger")
-    logfile = 'logfile.log'
+    logfile = os.path.join(ROOT_DIR, 'logfile.log')
     logging.basicConfig(
         level=logging.INFO,
         force=True,
         format="%(levelname)s - %(asctime)s - %(message)s",
-        handlers=[logging.FileHandler(filename=logfile), logging.StreamHandler(sys.stdout)],
+        handlers=[logging.FileHandler(filename=logfile),
+                  logging.StreamHandler(sys.stdout)],
         datefmt='%Y-%m-%d %H:%M:%S'
     )
     logger = logging.getLogger()
 
     return logfile, logger
+
 
 st.set_page_config(
     page_title="ZoteroTidy",
@@ -39,9 +44,6 @@ st.set_page_config(
         "About": "## ZooteroTidy is an App for Zotero Sanity Checks\n :copyright: Mohcine Chraibi",
     },
 )
-
-path = Path(__file__)
-ROOT_DIR = path.parent.absolute()
 
 
 def progress(max_run, my_bar):
@@ -550,10 +552,10 @@ if __name__ == "__main__":
                                     """:heavy_check_mark:
                                 Nothing to delete!"""
                                 )
-                    # offer to downlod log after start
-                    logfile_path = os.path.join(ROOT_DIR, logfile)
-                    logging.info(f"logfile: {logfile_path}")
-                    with open(logfile_path, encoding='utf-8') as f:
+                    # offer to downlod log after start                    
+                    logging.info(f"logfile: {logfile}")
+                    logging.info(f"Size of file: {os.path.getsize(logfile)}")
+                    with open(logfile, encoding='utf-8') as f:
                         data = f.read()
                         T = dt.datetime.now()
                         logging.info(f"data: {len(data)}")

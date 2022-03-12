@@ -1043,7 +1043,7 @@ def get_children():
     diff = defaultdict(list)
     pk = defaultdict(list)
     for i, item in enumerate(_items):
-        if is_standalone(item):
+        if is_standalone(item) or is_file(item):
             continue
 
         key = item["key"]
