@@ -419,11 +419,11 @@ if __name__ == "__main__":
                         utils.update_duplicate_items_state()
                         duplicates = st.session_state.doi_dupl_items
                         if duplicates:
-                            st.warning(f":x: Duplicate items: {len(duplicates)}")
+                            st.warning(f":x: Duplicate items ({len(duplicates)}):")
                         else:
                             st.info(":heavy_check_mark: No duplicate items found.")
 
-                        logging.info("Duplicate items: \n")
+                        logging.info(f"Duplicate items: {len(duplicates)}\n")
                         for d in duplicates:
                             utils.log_title(d)
 
@@ -441,7 +441,7 @@ if __name__ == "__main__":
                             :x: Standalone item(s): {len(standalones)}"""
                             )
 
-                        logging.info("Standalone items:\n")
+                        logging.info(f"Standalone items ({len(standalones)}):\n")
                         for d in standalones:
                             utils.log_title(d)
 
@@ -450,7 +450,7 @@ if __name__ == "__main__":
                         num_duplicates = len(st.session_state.multpdf_items)
                         if num_duplicates:
                             st.warning(f":x: Items with duplicate pdf files found: {num_duplicates}")
-                            logging.info("Items with duplicate pdf files:\n")
+                            logging.info(f"Items with duplicate pdf files ({num_duplicates}):\n")
                             for item in st.session_state.multpdf_items:
                                 item_key = item["key"]
                                 utils.log_title(item)
@@ -467,7 +467,7 @@ if __name__ == "__main__":
                         if num_duplicates:
                             st.warning(
                                 f":x: Items with no pdf attachments: {num_duplicates}")
-                            logging.info("Items with not pdf attachments:\n")
+                            logging.info(f"Items with not pdf attachments ({num_duplicates}):\n")
                             for item in st.session_state.nopdf_items:
                                 utils.log_title(item)
                         else:
@@ -485,9 +485,9 @@ if __name__ == "__main__":
                         else:
                             st.info(":heavy_check_mark: No suspecious items found")
 
-                        logging.info("Suspecious items:\n")
+                        logging.info(f"Suspecious items ({num_suspecious}):\n")
                         for item in st.session_state.suspecious_items:
-                            utils.log(item)
+                            utils.log_title(item)
 
                     if update_tags_z or update_tags_n or update_tags_m or update_tags_d:
                         if not utils.uptodate():

@@ -327,6 +327,17 @@ def is_book(_item):
     return _item["data"]["itemType"] in ["book", "bookSection"]
 
 
+def is_misc(_item):
+    """item is report or thesis
+
+    :param _item: Zotero library item
+    :type _item: dict
+    :returns: True of report
+
+    """
+    return _item["data"]["itemType"] in ["thesis", "report"]
+
+
 def is_article(_item):
     """Item is an article
 
@@ -505,6 +516,9 @@ def get_items_by_doi(_items):
 
     _items_by_doi = defaultdict(list)
     for _item in _items:
+        if is_standalone(_item) or is_file(_item):
+            continue
+
         if "DOI" in _item["data"]:
             doi = _item["data"]["DOI"]
             if doi:
@@ -523,6 +537,9 @@ def get_items_by_doi_or_isbn(_items):
 
     _items_by_doi_isbn = defaultdict(list)
     for _item in _items:
+        if is_standalone(_item) or is_file(_item):
+            continue
+
         if "DOI" in _item["data"]:
             doi = _item["data"]["DOI"]
             if doi:
@@ -538,7 +555,7 @@ def get_items_by_doi_or_isbn(_items):
 
 def get_items_with_empty_doi_or_isbn(_items):
     """
-    Titles with no DOI or no ISBN. field in [DOI, ISBN]
+    Articles with no DOI. Books with no ISBN.
 
     :param _items: Zotero library items
     :type _items: list containing dicts
@@ -556,6 +573,8 @@ def get_items_with_empty_doi_or_isbn(_items):
         elif is_book(_item):
             _field = "ISBN"
 
+        elif is_misc(_item):
+            logging.warning(f"Misc {_item['data']['itemType']}")
         else:
             logging.warning(f"Type of item not known {_item['data']['itemType']}")
             st.warning(f"Type of item not known {_item['data']['itemType']}")
@@ -962,8 +981,8 @@ def delete_duplicate_items(pl2):
 
     # update first, so we don't delete parents of items we want to keep
     for update_item in update_items:
-        zot.update_item(update_item)
         log_title(update_item)
+        zot.update_item(update_item)
         deleted_or_updated = True
 
     if delete_items:
@@ -972,8 +991,8 @@ def delete_duplicate_items(pl2):
 
     #  now delete: DANGER AREA!
     for delete_item in delete_items:
-        zot.delete_item(delete_item)
         log_title(delete_item)
+        zot.delete_item(delete_item)
         deleted_or_updated = True
 
     # remove tag
