@@ -17,12 +17,15 @@ path = Path(__file__)
 ROOT_DIR = path.parent.absolute()
 
 
+@st.cache
 def init_logger():
-    logging.info("init_logger ")
-    logfile = os.path.join(ROOT_DIR, 'logfile.log')
+    T = dt.datetime.now()
+    logging.info(f"init_logger at {T}")
+    name = f"tmp_{T.year}-{T.month:02}-{T.day:02}_{T.hour:02}-{T.minute:02}-{T.second:02}.log"
+    logfile = os.path.join(ROOT_DIR, name)
     logging.FILE_FORMAT = "[%(asctime)s] [%(levelname)-8s] - %(message)s"
     logging.DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
-    logging.init(logfile)
+    logging.init(logfile, to_console=False)
 
     return logfile
 
@@ -72,9 +75,6 @@ if __name__ == "__main__":
 
     if "init_logger" not in st.session_state:
         st.session_state.init_logger = False
-
-    if "logger" not in st.session_state:
-        st.session_state.logger = ""
 
     if "logfile" not in st.session_state:
         st.session_state.logfile = ""
@@ -126,12 +126,9 @@ if __name__ == "__main__":
 
     if not st.session_state.init_logger:
         logfile = init_logger()
-        # st.session_state.logger = logger
         st.session_state.logfile = logfile
-        open(logfile, 'w').close()  # filemode in config does not work!
         st.session_state.init_logger = True
 
-    #logger = st.session_state.logger
     logfile = st.session_state.logfile
 
     #  UI --------------------------------
@@ -201,7 +198,7 @@ if __name__ == "__main__":
                     st.warning(f"Not enough items in library. num_items = {st.session_state.num_items}")
                     st.stop()
             except UserNotAuthorised:
-                st.error("Connection refused. Invalid key ..")
+                st.error("Connetion refused. Invalid key ..")
                 st.stop()
 
             st.session_state.zot_version = st.session_state.zot.last_modified_version()
@@ -228,6 +225,8 @@ if __name__ == "__main__":
         )
         load_library = lf.form_submit_button(label="➡️ Load library")
         if load_library:
+            logging.info(f"Touch {logfile}")
+            open(logfile, 'w').close()
             # update num of items when load
             update_session_state()
             msg_status.info(f"Retrieving {max_items} items from library ...")
@@ -327,6 +326,7 @@ if __name__ == "__main__":
                 start = config.form_submit_button(label="🚦Start")
                 pl2 = st.empty()
                 if start:
+
                     # check write-options
                     update_tags = update_tags_d \
                         or update_tags_m \
@@ -386,7 +386,7 @@ if __name__ == "__main__":
                             logging.info(f"doi: {i}")
 
                         if total - len(OA_items) - len(CA_items):
-                            st.warning(f":interrobang: {total - len(OA_items) - len(CA_items)} DOIs could not be found by Unpaywall.")
+                            st.warning(f":x: {total - len(OA_items) - len(CA_items)} DOIs could not be found by Unpaywall.")
                             logging.warning(f"{total - len(OA_items) - len(CA_items)} DOIs could not be found by Unpaywall.\n")
                             for doi, item in items_by_doi.items():
                                 doi = doi.lower()
@@ -545,14 +545,14 @@ if __name__ == "__main__":
                                     """:heavy_check_mark:
                                 Nothing to delete!"""
                                 )
-                    # offer to downlod log after start                    
+
                     logging.info(f"logfile: {logfile}")
                     logging.info(f"Size of file: {os.path.getsize(logfile)}")
                     with open(logfile, encoding='utf-8') as f:
-                        data = f.read()
+                        logging.info("Write logs in file")
                         T = dt.datetime.now()
-                        logging.info(f"data: {len(data)}")
-                        # zot.groups() does not work, for reasons I dont know!
                         group_name = st.session_state.zot.collections()[0]['library']['name']
-                        log_file = f"{group_name}_{T.year}-{T.month:02}-{T.day:02}_{T.hour:02}-{T.minute:02}-{T.second:02}.log"
-                        download = st.sidebar.download_button('Download log', data, file_name=log_file)
+                        dlog_file = f"{group_name}_{T.year}-{T.month:02}-{T.day:02}_{T.hour:02}-{T.minute:02}-{T.second:02}.log"
+                        download = st.sidebar.download_button('Download log',
+                                                              f,
+                                                              file_name=dlog_file)
