@@ -745,7 +745,7 @@ def add_tag(tags_to_add, _zot, _item):
     if not new_tags:
         return False
 
-    st.code(f"add tags {new_tags} to {title}")
+    #st.code(f"add tags {new_tags} to {title}")
     logging.info(f"add tags {new_tags} to {title}")
     _zot.add_tags(_item, *new_tags)
     return True
@@ -890,6 +890,7 @@ def update_tags(pl2, update_tags_z, update_tags_n, update_tags_m, update_tags_d)
         step = int(100 / st.session_state.num_items)
         for i, item in enumerate(st.session_state.zot_items):
             progress_by = (i + 1) * step
+            print(progress_by)
             if i == st.session_state.num_items - 1:
                 progress_by = 100
 
