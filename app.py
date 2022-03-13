@@ -346,14 +346,16 @@ if __name__ == "__main__":
                     if head:
                         num_head = 10
                         st.info(f"Top {num_head} items")
-                        logging.info(f"Top {num_head} items")                       
+                        logging.info(f"Top {num_head} items")
                         count = 0
                         for item in st.session_state.zot_items:
-                            if not utils.is_standalone(item):
-                                utils.log_title(item)
-                                count += 1
-                                if count >= num_head:
-                                    break
+                            if utils.is_standalone(item) or utils.is_file(item):
+                                continue
+
+                            utils.log_title(item)
+                            count += 1
+                            if count >= num_head:
+                                break
 
                     if trash:
                         trash_empty = utils.trash_is_empty(st.session_state.zot)

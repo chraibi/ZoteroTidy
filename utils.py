@@ -5,7 +5,7 @@ from datetime import datetime
 import streamlit as st
 from unpywall import Unpywall
 from unpywall.utils import UnpywallCredentials
-
+import time
 
 def unpywall_credits(mail):
     """Setup credidentials for unpaywall
@@ -852,11 +852,11 @@ def items_uptodate():
         vc[item["key"]] = item["data"]["version"]
 
     vs_reduced = {k: vs[k] for k, _ in vc.items()}
-    print("----")
-    print("vc: ", len(vc), vc)
-    print("vs: ", len(vs), vs)
-    print("vs_reduced: ", len(vs_reduced), vs_reduced)
-    print(vc == vs_reduced)
+    logging.info("----")
+    logging.info("vc: ", len(vc), vc)
+    logging.info("vs: ", len(vs), vs)
+    logging.info("vs_reduced: ", len(vs_reduced), vs_reduced)
+    logging.info(vc == vs_reduced)
     return vc == vs_reduced
 
 
@@ -881,19 +881,16 @@ def update_tags(pl2, update_tags_z, update_tags_n, update_tags_m, update_tags_d)
 
     new_tags = set_new_tag(update_tags_z, update_tags_n, update_tags_m, update_tags_d)
     changed = []
+    msg = st.empty()
     if not new_tags:
         pl2.info(":heavy_check_mark: Tags of the library are not changed.")
     else:
         pl2.warning(":red_circle: Updating tags ...")
 
         my_bar = st.progress(0)
-        step = int(100 / st.session_state.num_items)
         for i, item in enumerate(st.session_state.zot_items):
-            progress_by = (i + 1) * step
-            print(progress_by)
-            if i == st.session_state.num_items - 1:
-                progress_by = 100
-
+            msg.info(f"process {i} / {st.session_state.zot_items}")
+            progress_by = (i + 1) / st.session_state.num_items
             my_bar.progress(progress_by)
             ch = add_tag(
                 new_tags[item["data"]["key"]],
@@ -1069,7 +1066,7 @@ def get_children():
         key = item["key"]
         if "numChildren" not in item["meta"]:
             item_type = item["data"]["itemType"]
-            print(f"What a type: <{item_type}>")
+            logging.warning(f"What a type: <{item_type}>")
             continue
 
         if item["meta"]["numChildren"] == 0:
