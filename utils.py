@@ -390,7 +390,12 @@ def retrieve_data(_zot, _num_items):
     while read_items < _num_items:
         progress_by = (count + 1) * step
         count += 1
-        lib_items.extend(_zot.items(limit=limit, start=start))
+        try:
+            lib_items.extend(_zot.items(limit=limit, start=start))
+        except Exception as e:
+            logging.error(f"Could not retrive data with error {str(e)}")
+            st.stop()
+
         read_items += limit
         start = start + limit
         if _num_items - read_items < limit:
