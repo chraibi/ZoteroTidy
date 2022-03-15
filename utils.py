@@ -328,14 +328,14 @@ def is_book(_item):
 
 
 def is_misc(_item):
-    """item is report or thesis
+    """item is report, thesis or document
 
     :param _item: Zotero library item
     :type _item: dict
-    :returns: True of report
+    :returns: Bool
 
     """
-    return _item["data"]["itemType"] in ["thesis", "report"]
+    return _item["data"]["itemType"] in ["thesis", "report", "document"]
 
 
 def is_article(_item):
