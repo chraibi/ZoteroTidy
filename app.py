@@ -254,6 +254,9 @@ if __name__ == "__main__":
                 c1, c2 = st.columns((1, 1))
                 c1.write("**Report options**")
                 c2.write("**Update options**")
+                update_tags_o = c2.checkbox(
+                    "Tag open-access articles", help="open-access"
+                )
                 update_tags_z = c2.checkbox(
                     "Tag suspecious items", help="todo_catalog"
                 )
@@ -331,7 +334,8 @@ if __name__ == "__main__":
                     update_tags = update_tags_d \
                         or update_tags_m \
                         or update_tags_n \
-                        or update_tags_z
+                        or update_tags_z \
+                        or update_tags_o
 
                     if update_tags + \
                        delete_duplicates + \
@@ -491,7 +495,7 @@ if __name__ == "__main__":
                         for item in st.session_state.suspecious_items:
                             utils.log_title(item)
 
-                    if update_tags_z or update_tags_n or update_tags_m or update_tags_d:
+                    if update_tags_z or update_tags_n or update_tags_m or update_tags_d or update_tags_o:
                         if not utils.uptodate():
                             st.error(
                                 """:skull_and_crossbones: Library is not
@@ -504,6 +508,8 @@ if __name__ == "__main__":
                                 update_tags_n,
                                 update_tags_m,
                                 update_tags_d,
+                                update_tags_o,
+                                mail,
                             )
 
                     if delete_duplicates:

@@ -1,11 +1,11 @@
-import lovely_logger as logging
 from collections import defaultdict
 from datetime import datetime
 
+import lovely_logger as logging
 import streamlit as st
 from unpywall import Unpywall
 from unpywall.utils import UnpywallCredentials
-import time
+
 
 def unpywall_credits(mail):
     """Setup credidentials for unpaywall
@@ -511,6 +511,29 @@ def duplicates_by_isbn(_items):
     return
 
 
+def doi_to_item(dois):
+    """return items to a list of dois
+
+    :param dois: DOI numbers
+    :type dois: list of str
+    :returns: items with DOIS
+
+    """
+    items = []
+    for doi in dois:
+        for _item in st.session_state.zot_items:
+            if is_standalone(_item) or is_file(_item):
+                continue
+
+            if "DOI" in _item["data"]:
+                doi_item = _item["data"]["DOI"]                
+                if doi_item.lower() == doi.lower():
+                    items.append(_item)
+                    continue
+
+    return items
+
+
 def get_items_by_doi(_items):
     """Items having a DOI
 
@@ -669,7 +692,7 @@ def log_title(_item):
     logging.info(f"{ttt}")
 
 
-def set_new_tag(z, n, m, d):
+def set_new_tag(z, n, m, d, o, mail=""):
     """Prepare list of tags to be added to items
 
     We have to add the tags to items at once.
@@ -692,10 +715,11 @@ def set_new_tag(z, n, m, d):
     :type m: Bool
     :param d: Duplicate items
     :type d: Bool
+    :param o: open-access articles
+    :type o: Bool
     :returns: dict of lists
 
     """
-
     new_tags = defaultdict(list)
     if z:
         update_suspecious_state()
@@ -721,6 +745,18 @@ def set_new_tag(z, n, m, d):
 
         for item in duplicate_items:
             new_tags[item["data"]["key"]].append("duplicate_item")
+
+    if o:
+        unpywall_credits(mail)
+        items_by_doi = get_items_by_doi(st.session_state.zot_items)
+        pl = st.empty()
+        with st.spinner("Initializing ..."):
+            OA_items, _ = get_oa_ca(items_by_doi, pl)
+        
+        items = doi_to_item(OA_items)
+        
+        for item in items:
+            new_tags[item["data"]["key"]].append("open-access")
 
     return new_tags
 
@@ -750,7 +786,6 @@ def add_tag(tags_to_add, _zot, _item):
     if not new_tags:
         return False
 
-    #st.code(f"add tags {new_tags} to {title}")
     logging.info(f"add tags {new_tags} to {title}")
     _zot.add_tags(_item, *new_tags)
     return True
@@ -858,42 +893,44 @@ def items_uptodate():
 
     vs_reduced = {k: vs[k] for k, _ in vc.items()}
     logging.info("----")
-    logging.info("vc: ", len(vc), vc)
-    logging.info("vs: ", len(vs), vs)
-    logging.info("vs_reduced: ", len(vs_reduced), vs_reduced)
+    logging.info(f"vc: {len(vc)}, {vc}")
+    logging.info(f"vs: {len(vs)}, {vs}")
+    logging.info(f"vs_reduced: {len(vs_reduced)}, {vs_reduced}")
     logging.info(vc == vs_reduced)
     return vc == vs_reduced
 
 
-def update_tags(pl2, update_tags_z, update_tags_n, update_tags_m, update_tags_d):
+def update_tags(pl2, update_tags_z, update_tags_n, update_tags_m, update_tags_d, update_tags_o, mail):
+    st.info("update_tags")
     """
-    Update special items with some tags
 
     A wrapper function  of add_tag()
 
     :param pl2: placeholder to print messages
     :type pl2: st.empty()
-    :param update_tags_z:  Suspecious items
-    :type update_tags_z:  Bool
-    :param update_tags_n:  Items with no pdf
-    :type update_tags_n: : Bool
-    :param update_tags_m: : Items with multiple pdf
-    :type update_tags_m: : Bool
-    :param update_tags_m: : Duplicate items
-    :type d: Bool
+    :param update_tags_z: Suspecious items
+    :type update_tags_z: Bool
+    :param update_tags_n: Items with no pdf
+    :type update_tags_n: Bool
+    :param update_tags_m: Items with multiple pdf
+    :type update_tags_m: Bool
+    :param update_tags_d: Duplicte items
+    :type update_tags_d: Bool
+    :param update_tags_o: Open-access articles
+    :type update_tags_: Bool
+    :param mail: mail necessary to fetch open-access articles
 
     """
-
-    new_tags = set_new_tag(update_tags_z, update_tags_n, update_tags_m, update_tags_d)
+    new_tags = set_new_tag(update_tags_z, update_tags_n, update_tags_m, update_tags_d, update_tags_o, mail)
     changed = []
     msg = st.empty()
+
     if not new_tags:
         pl2.info(":heavy_check_mark: Tags of the library are not changed.")
     else:
         pl2.warning(":red_circle: Updating tags ...")
-
         my_bar = st.progress(0)
-        for i, item in enumerate(st.session_state.zot_items):
+        for i, item in enumerate(st.session_state.zot_items):            
             msg.info(f"process {i} / {st.session_state.zot_items}")
             progress_by = (i + 1) / st.session_state.num_items
             my_bar.progress(progress_by)
@@ -1105,6 +1142,5 @@ def get_oa_ca(_dois, pl2):
         logging.info(str(e))
 
     oa_dois = list(articles["doi"][articles["is_oa"]])
-    ca_dois = list(articles["doi"][~articles["is_oa"]])
-
+    ca_dois = list(articles["doi"][~articles["is_oa"]])    
     return oa_dois, ca_dois
