@@ -40,6 +40,7 @@ def manual():
           - Items *without* pdf-files: `nopdf`
           - Items with *libraryCatalog* \"Zotero\": `todo_catalog`
           - Duplicate items: `duplicate_item`
+          - Open-access journals: `open-access`
         :red_circle: **NOTE**: These options need to calculate some lists
         in case these are still empty, e.g.,
         the list of items with duplicate pdf attachments.
