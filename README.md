@@ -1,7 +1,7 @@
 # ZoteroTidy
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/chraibi/zoterotidy/main/app.py)
-[![Heroku](https://heroku-badge.herokuapp.com/?app=heroku-badge)](https://zotero-tidy.herokuapp.com/)
+[![Heroku](http://heroku-shields.herokuapp.com/zotero-tidy)](https://zotero-tidy.herokuapp.com/)
 
 This is a diagnostic tool to ease maintaining a Zotero library.
 
