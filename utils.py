@@ -604,9 +604,11 @@ def get_items_with_empty_doi_or_isbn(_items):
 
         elif is_misc(_item):
             logging.warning(f"Misc {_item['data']['itemType']}")
+            continue
         else:
             logging.warning(f"Type of item not known {_item['data']['itemType']}")
             st.warning(f"Type of item not known {_item['data']['itemType']}")
+            continue
 
         if _field in _item["data"]:
             if not _item["data"][_field]:
