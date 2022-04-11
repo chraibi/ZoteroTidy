@@ -904,9 +904,7 @@ def items_uptodate():
 
 
 def update_tags(pl2, update_tags_z, update_tags_n, update_tags_m, update_tags_d, update_tags_o, mail):
-    st.info("update_tags")
     """
-
     A wrapper function  of add_tag()
 
     :param pl2: placeholder to print messages
@@ -933,9 +931,11 @@ def update_tags(pl2, update_tags_z, update_tags_n, update_tags_m, update_tags_d,
     else:
         pl2.warning(":red_circle: Updating tags ...")
         my_bar = st.progress(0)
-        for i, item in enumerate(st.session_state.zot_items):            
-            msg.info(f"process {i} / {st.session_state.zot_items}")
-            progress_by = (i + 1) / st.session_state.num_items
+        retrieved_items = len(st.session_state.zot_items)
+        for i, item in enumerate(st.session_state.zot_items):
+            msg.info(f"process {i} / {retrieved_items}")
+            logging.info(f"process {i} / {retrieved_items}")
+            progress_by = (i + 1) / retrieved_items
             my_bar.progress(progress_by)
             ch = add_tag(
                 new_tags[item["data"]["key"]],
