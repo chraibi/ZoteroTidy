@@ -730,13 +730,13 @@ def set_new_tag(z, n, m, d, o, mail=""):
         for item in zotero_items:
             new_tags[item["data"]["key"]].append("todo_catalog")
 
-    if n:
+    if m:
         update_duplicate_attach_state()
         items_duplicate_attach = st.session_state.multpdf_items
         for item in items_duplicate_attach:
             new_tags[item["data"]["key"]].append("duplicate_pdf")
 
-    if m:
+    if n:
         update_without_pdf_state()
         items_without_pdf = st.session_state.nopdf_items
         for item in items_without_pdf:
@@ -779,13 +779,14 @@ def add_tag(tags_to_add, _zot, _item):
     :returns: True if changes have been made
 
     """
+    logging.info(f"Enter add_tag with {tags_to_add}. standalone: {is_standalone(_item)}. is_file: {is_file(_item)}")
     if not tags_to_add or is_standalone(_item) and is_file(_item):
         return False
 
     title = _item["data"]["title"]
     item_tags = [t["tag"] for t in _item["data"]["tags"]]
     new_tags = [t for t in tags_to_add if t not in item_tags]
-
+    logging.info(f"new tags: {new_tags}")
     if not new_tags:
         return False
 
