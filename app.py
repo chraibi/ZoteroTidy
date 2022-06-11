@@ -17,7 +17,8 @@ path = Path(__file__)
 ROOT_DIR = path.parent.absolute()
 
 
-@st.cache
+
+#@st.cache
 def init_logger():
     T = dt.datetime.now()
     logging.info(f"init_logger at {T}")
