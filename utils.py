@@ -224,8 +224,15 @@ def get_items_with_duplicate_pdf(_zot, _items):
 
         key = _item["key"]
         cs = st.session_state.children[key]
+        logging.info(f"key: {key}")
+        item_type = _item["data"]["itemType"]
+        logging.info(f"type: {item_type}")
         for c in cs:
             if attachment_is_pdf(c):
+                logging.info(f"c: {c}")
+                logging.info("----------")
+                cdata = c["data"]
+                logging.info(f"cdata {cdata}")
                 _pdf_attachments[key].append(c["data"]["filename"])
 
         if len(_pdf_attachments[key]) > 1:
@@ -365,8 +372,10 @@ def is_standalone(_item):
     # Zotero 6 write annotations in pdfs as a standalone item with parent being
     # the pdf file!
 
-    return _item["data"]["itemType"] in ["note", "attachment", "annotation"] and \
-        "parentItem" not in _item["data"]
+    return (
+        _item["data"]["itemType"] in ["note", "attachment", "annotation"]
+        and "parentItem" not in _item["data"]
+    )
 
 
 def retrieve_data(_zot, _num_items):
@@ -527,7 +536,7 @@ def doi_to_item(dois):
                 continue
 
             if "DOI" in _item["data"]:
-                doi_item = _item["data"]["DOI"]                
+                doi_item = _item["data"]["DOI"]
                 if doi_item.lower() == doi.lower():
                     items.append(_item)
                     continue
@@ -755,9 +764,9 @@ def set_new_tag(z, n, m, d, o, mail=""):
         pl = st.empty()
         with st.spinner("Initializing ..."):
             OA_items, _ = get_oa_ca(items_by_doi, pl)
-        
+
         items = doi_to_item(OA_items)
-        
+
         for item in items:
             new_tags[item["data"]["key"]].append("open-access")
 
@@ -779,7 +788,9 @@ def add_tag(tags_to_add, _zot, _item):
     :returns: True if changes have been made
 
     """
-    logging.info(f"Enter add_tag with {tags_to_add}. standalone: {is_standalone(_item)}. is_file: {is_file(_item)}")
+    logging.info(
+        f"Enter add_tag with {tags_to_add}. standalone: {is_standalone(_item)}. is_file: {is_file(_item)}"
+    )
     if not tags_to_add or is_standalone(_item) and is_file(_item):
         return False
 
@@ -904,7 +915,9 @@ def items_uptodate():
     return vc == vs_reduced
 
 
-def update_tags(pl2, update_tags_z, update_tags_n, update_tags_m, update_tags_d, update_tags_o, mail):
+def update_tags(
+    pl2, update_tags_z, update_tags_n, update_tags_m, update_tags_d, update_tags_o, mail
+):
     """
     A wrapper function  of add_tag()
 
@@ -923,7 +936,9 @@ def update_tags(pl2, update_tags_z, update_tags_n, update_tags_m, update_tags_d,
     :param mail: mail necessary to fetch open-access articles
 
     """
-    new_tags = set_new_tag(update_tags_z, update_tags_n, update_tags_m, update_tags_d, update_tags_o, mail)
+    new_tags = set_new_tag(
+        update_tags_z, update_tags_n, update_tags_m, update_tags_d, update_tags_o, mail
+    )
     changed = []
     msg = st.empty()
 
@@ -1146,5 +1161,5 @@ def get_oa_ca(_dois, pl2):
         logging.info(str(e))
 
     oa_dois = list(articles["doi"][articles["is_oa"]])
-    ca_dois = list(articles["doi"][~articles["is_oa"]])    
+    ca_dois = list(articles["doi"][~articles["is_oa"]])
     return oa_dois, ca_dois
