@@ -1,10 +1,10 @@
 from collections import defaultdict
 from datetime import datetime
 
-import lovely_logger as logging
+import lovely_logger as logging  # type: ignore
 import streamlit as st
-from unpywall import Unpywall
-from unpywall.utils import UnpywallCredentials
+from unpywall import Unpywall  # type: ignore
+from unpywall.utils import UnpywallCredentials  # type: ignore
 
 
 def unpywall_credits(mail):
@@ -219,7 +219,7 @@ def get_items_with_duplicate_pdf(_zot, _items):
     _items_duplicate_attach = []
     _pdf_attachments = defaultdict(list)
     for _item in _items:
-        if is_standalone(_item):
+        if is_standalone(_item) or is_file(_item):
             continue
 
         key = _item["key"]
@@ -361,6 +361,8 @@ def is_article(_item):
     ]
 
 
+# TODO is_Standalone is often used with is_file.
+# probably replace is_standalone with is_file.
 def is_standalone(_item):
     """Definition of a standalone item
 
@@ -372,10 +374,7 @@ def is_standalone(_item):
     # Zotero 6 write annotations in pdfs as a standalone item with parent being
     # the pdf file!
 
-    return (
-        _item["data"]["itemType"] in ["note", "attachment", "annotation"]
-        and "parentItem" not in _item["data"]
-    )
+    return is_file(_item) and "parentItem" not in _item["data"]
 
 
 def retrieve_data(_zot, _num_items):
@@ -462,7 +461,7 @@ def duplicates_by_title(_items):
     duplicate_items_by_title = defaultdict(list)
     duplicates = []
     for item in _items:
-        if is_standalone(item):
+        if is_standalone(item) or is_file(item):
             continue
 
         iType = item["data"]["itemType"]
