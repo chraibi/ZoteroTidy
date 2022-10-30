@@ -1,3 +1,4 @@
+
 # ZoteroTidy
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/chraibi/zoterotidy/main/app.py)
@@ -49,3 +50,4 @@ But they are kinda absolete. You should use the Streamlite-App in the link above
 ## Credits
 
 Some parts of the merging function are adapted from [zotero-cleanup](https://github.com/christianbrodbeck/zotero-cleanup).
+
