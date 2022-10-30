@@ -51,3 +51,13 @@ But they are kinda absolete. You should use the Streamlite-App in the link above
 
 Some parts of the merging function are adapted from [zotero-cleanup](https://github.com/christianbrodbeck/zotero-cleanup).
 
+---
+title: Zoterotidy
+emoji: 🌖
+colorFrom: indigo
+colorTo: purple
+sdk: streamlit
+sdk_version: 1.10.0
+app_file: app.py
+pinned: false
+---
