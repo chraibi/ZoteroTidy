@@ -224,16 +224,17 @@ def get_items_with_duplicate_pdf(_zot, _items):
 
         key = _item["key"]
         cs = st.session_state.children[key]
-        logging.info(f"key: {key}")
-        item_type = _item["data"]["itemType"]
-        logging.info(f"type: {item_type}")
         for c in cs:
             if attachment_is_pdf(c):
                 logging.info(f"c: {c}")
-                logging.info("----------")
-                cdata = c["data"]
-                logging.info(f"cdata {cdata}")
-                _pdf_attachments[key].append(c["data"]["filename"])
+                if "filename" in c["data"]:
+                    _pdf_attachments[key].append(c["data"]["filename"])
+                else:
+                    item_type = _item["data"]["itemType"]
+                    cdata = c["data"]
+                    logging.info("----------")
+                    logging.warning(f"cdata {cdata}")
+                    logging.warning(f"type: {item_type}")
 
         if len(_pdf_attachments[key]) > 1:
             _items_duplicate_attach.append(_item)
