@@ -128,7 +128,6 @@ def howto():
 
 
 def about():
-
     msg = st.markdown(
         """ This app offers several functionalities
     to ease the maintenance of Zotero libraries.
@@ -226,13 +225,13 @@ def get_items_with_duplicate_pdf(_zot, _items):
         cs = st.session_state.children[key]
         for c in cs:
             if attachment_is_pdf(c):
-                logging.info(f"c: {c}")
                 if "filename" in c["data"]:
                     _pdf_attachments[key].append(c["data"]["filename"])
                 else:
                     item_type = _item["data"]["itemType"]
                     cdata = c["data"]
-                    logging.info("----------")
+                    logging.info("----- DEBUGISSUE -----")
+                    logging.info(f"c: {c}")
                     logging.warning(f"cdata {cdata}")
                     logging.warning(f"type: {item_type}")
 
