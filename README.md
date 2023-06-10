@@ -1,19 +1,6 @@
----
-title: Zoterotidy
-emoji: 🌖
-colorFrom: indigo
-colorTo: purple
-sdk: streamlit
-sdk_version: 1.10.0
-app_file: app.py
-tags: [zotero]
-pinned: false
----
-
 # ZoteroTidy
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/chraibi/zoterotidy/main/app.py)
-[![Heroku](http://heroku-shields.herokuapp.com/zotero-tidy)](https://zotero-tidy.herokuapp.com/)
 
 This is a diagnostic tool to ease maintaining a Zotero library.
 
@@ -27,7 +14,7 @@ It implements some repetitive, simple, but annoyingly repetitive tasks such as:
 - Update and/or delete some tags
 - ...
 
-(YouTube-Video)
+(click on the picture)
 
 [![Alt text](https://user-images.githubusercontent.com/5772973/157309426-0eb7013d-4ded-4697-88ab-a549bd0985b1.png)](https://www.youtube.com/watch?v=P_YeNXEOINk)
 
